@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognito IAS Quiz Portal</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f0f2f5; 
+            margin: 0; padding: 20px; color: #333;
+        }
+        .container { 
+            max-width: 800px; margin: auto; background: white; 
+            padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .header { text-align: center; border-bottom: 2px solid #2c3e50; margin-bottom: 20px; padding-bottom: 10px; }
+        
+        /* Timer aur Score ka style */
+        .score-board { 
+            display: flex; justify-content: space-around;
+            font-size: 1.2em; font-weight: bold; color: #2980b9; margin: 15px 0; 
+            background: #eef2f7; padding: 10px; border-radius: 8px;
+        }
+        #timer-display { color: #e74c3c; }
+        
+        .question-card { 
+            background: #fff; border: 1px solid #e1e4e8; padding: 20px; 
+            margin-bottom: 25px; border-radius: 10px; transition: 0.3s;
+        }
+        .question-text { font-size: 1.1em; font-weight: 600; margin-bottom: 15px; white-space: pre-line; }
+
+        .option-item { 
+            background: #f8f9fa; margin: 8px 0; padding: 12px 15px; 
+            border-radius: 8px; border: 1px solid #ddd; cursor: pointer;
+        }
+        .option-item:hover { background: #e7f3ff; border-color: #3498db; }
+
+        .submit-section { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
+        .input-name { padding: 12px; border-radius: 5px; border: 1px solid #ddd; width: 250px; margin-bottom: 15px; font-size: 1em;}
+        .btn-submit { background: #e67e22; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1em; }
+        .btn-submit:hover { background: #d35400; }
+        
+        .footer { text-align: center; margin-top: 30px; color: #7f8c8d; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🏆 Cognito IAS Academy</h1>
+        <p>UPSC Daily Practice Set</p>
+        
+        <div class="score-board">
+            <div>⏱️ Time: <span id="timer-display">10:00</span></div>
+            <div>Score: <span id="current-score">0</span></div>
+            <div>Attempted: <span id="attempted">0</span></div>
+        </div>
+    </div>
+
+    {% if pittara %}
+        {% for item in pittara %}
+        <div class="question-card">
+            <div class="question-text">
+                Q{{ loop.index }}: {{ item.sawal.replace('|', '\n') }}
+            </div>
+            <div class="options-list">
+                {% for opt in item.options %}
+                <div class="option-item" onclick="checkAnswer('{{ loop.index0 }}', '{{ item.jawab }}', this.parentElement.parentElement)">
+                    <strong>{{ ['A','B','C','D'][loop.index0] }})</strong> {{ opt }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 50px;">
+            <p>❌ Sawal nahi mile. Kripya questions.csv check karein.</p>
+        </div>
+    {% endif %}
+
+    <div class="submit-section">
+        <input type="text" id="student-name" class="input-name" placeholder="Apna Poora Naam Likhein">
+        <br>
+        <button onclick="submitTest()" class="btn-submit">Submit Final Result</button>
+    </div>
+
+    <div class="footer">
+        Made for Vikas Chandra | Cognito IAS © 2026
+    </div>
+</div>
+
+<script>
+    let totalScore = 0;
+    let totalAttempted = 0;
+    let timeLeft = 600; // 10 minutes in seconds
+    let timerInterval;
+
+    // --- Timer Function ---
+    function startTimer() {
+        timerInterval = setInterval(function() {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            
+            document.getElementById('timer-display').innerText = 
+                (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                alert("⏰ Samay Samapt! Aapka test automatic submit ho raha hai.");
+                submitTest();
+            }
+            timeLeft--;
+        }, 1000);
+    }
+
+    // --- Answer Checking Function ---
+    function checkAnswer(selected, correct, cardElement) {
+        if (cardElement.classList.contains('disabled')) return;
+        
+        let options = ['A', 'B', 'C', 'D'];
+        let selectedLetter = options[selected];
+        totalAttempted++;
+        
+        if (selectedLetter === correct.trim().toUpperCase()) {
+            totalScore += 2;
+            cardElement.style.backgroundColor = "#d4edda"; 
+        } else {
+            totalScore -= 0.66;
+            cardElement.style.backgroundColor = "#f8d7da"; 
+        }
+
+        document.getElementById('current-score').innerText = totalScore.toFixed(2);
+        document.getElementById('attempted').innerText = totalAttempted;
+
+        cardElement.classList.add('disabled');
+        cardElement.style.pointerEvents = 'none';
+    }
+
+    // --- Final Submission Function ---
+    function submitTest() {
+        let name = document.getElementById('student-name').value;
+        if (!name) { 
+            name = "Anjan Candidate"; // Agar naam nahi likha toh default
+        }
+
+        clearInterval(timerInterval); // Stop timer
+
+        fetch('/save_result', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name, score: totalScore.toFixed(2) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === "success") {
+                // Rank Popup
+                alert("🎉 Test Submitted!\n\nCandidate: " + name + 
+                      "\nFinal Score: " + totalScore.toFixed(2) + 
+                      "\nRank: " + data.rank + " / " + data.total);
+                
+                // Page reload option (Optional)
+                if(confirm("Kya aap naya test shuru karna chahte hain?")) {
+                    location.reload();
+                }
+            } else {
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error("Submit Error:", err);
+            alert("Server se connection nahi ho paya!");
+        });
+    }
+
+    // Start timer on page load
+    window.onload = startTimer;
+</script>
+
+</body>
+</html>
