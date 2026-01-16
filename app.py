@@ -2,21 +2,18 @@ import csv
 import os
 from flask import Flask, render_template, request, jsonify
 
-# --- FIX: Python ko batana ki templates folder kahan hai ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
-
-app = Flask(__name__, template_folder=TEMPLATE_DIR)
-
-CSV_PATH = os.path.join(BASE_DIR, 'questions.csv')
-RESULTS_PATH = os.path.join(BASE_DIR, 'web_results.txt')
+# Render/Linux ke liye path fix
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Hum Flask ko zor de kar bata rahe hain ki 'templates' folder kahan hai
+app = Flask(__name__, template_folder=os.path.join(current_dir, 'templates'))
 
 def get_questions():
     questions = []
-    if not os.path.exists(CSV_PATH):
+    path = os.path.join(current_dir, "questions.csv")
+    if not os.path.exists(path):
         return []
     try:
-        with open(CSV_PATH, "r", encoding="utf-8-sig") as f:
+        with open(path, "r", encoding="utf-8-sig") as f:
             reader = csv.reader(f)
             next(reader, None)
             for row in reader:
@@ -28,11 +25,13 @@ def get_questions():
                     })
         return questions
     except Exception as e:
+        print(f"Error: {e}")
         return []
 
 @app.route("/")
 def home():
     all_data = get_questions()
+    # Yahan error aata hai agar templates/index.html nahi milti
     return render_template("index.html", pittara=all_data)
 
 @app.route("/save_result", methods=["POST"])
@@ -40,31 +39,23 @@ def save_result():
     try:
         data = request.json 
         name = data.get("name", "Anjan")
-        current_score = float(data.get("score", 0))
+        score = float(data.get("score", 0))
+        path_txt = os.path.join(current_dir, "web_results.txt")
         
-        with open(RESULTS_PATH, "a") as f:
-            f.write(f"{name},{current_score}\n")
+        with open(path_txt, "a") as f:
+            f.write(f"{name},{score}\n")
 
         all_scores = []
-        if os.path.exists(RESULTS_PATH):
-            with open(RESULTS_PATH, "r") as f:
+        if os.path.exists(path_txt):
+            with open(path_txt, "r") as f:
                 for line in f:
                     parts = line.strip().split(",")
                     if len(parts) == 2:
-                        try:
-                            all_scores.append(float(parts[1]))
-                        except:
-                            continue
+                        all_scores.append(float(parts[1]))
         
         all_scores.sort(reverse=True)
-        rank = all_scores.index(current_score) + 1
-        total_participants = len(all_scores)
-
-        return jsonify({
-            "status": "success", 
-            "rank": rank,
-            "total": total_participants
-        })
+        rank = all_scores.index(score) + 1
+        return jsonify({"status": "success", "rank": rank, "total": len(all_scores)})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
