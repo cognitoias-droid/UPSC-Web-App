@@ -2,25 +2,23 @@ import csv
 import os
 from flask import Flask, render_template, request, jsonify
 
-app = Flask(__name__)
-
-# --- ZAROORI: FILE PATH KO DYNAMIC BANANA ---
-# Yeh line apne aap dhoond legi ki file kahan rakhi hai
+# --- FIX: Python ko batana ki templates folder kahan hai ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+
+app = Flask(__name__, template_folder=TEMPLATE_DIR)
+
 CSV_PATH = os.path.join(BASE_DIR, 'questions.csv')
 RESULTS_PATH = os.path.join(BASE_DIR, 'web_results.txt')
 
-# --- 1. CSV SE SAWAL UTHANE KA LOGIC ---
 def get_questions():
     questions = []
-    # Ab hum dynamic CSV_PATH use karenge
     if not os.path.exists(CSV_PATH):
-        print(f"❌ File nahi mili: {CSV_PATH}")
         return []
     try:
         with open(CSV_PATH, "r", encoding="utf-8-sig") as f:
             reader = csv.reader(f)
-            next(reader, None) # Pehli row skip
+            next(reader, None)
             for row in reader:
                 if len(row) >= 6:
                     questions.append({
@@ -30,16 +28,13 @@ def get_questions():
                     })
         return questions
     except Exception as e:
-        print(f"❌ Error reading CSV: {e}")
         return []
 
-# --- 2. HOME PAGE ROUTE ---
 @app.route("/")
 def home():
     all_data = get_questions()
     return render_template("index.html", pittara=all_data)
 
-# --- 3. RESULT SAVE AUR RANK CALCULATE KARNE KA ROUTE ---
 @app.route("/save_result", methods=["POST"])
 def save_result():
     try:
@@ -47,11 +42,9 @@ def save_result():
         name = data.get("name", "Anjan")
         current_score = float(data.get("score", 0))
         
-        # A. Result save karein (Dynamic path use karke)
         with open(RESULTS_PATH, "a") as f:
             f.write(f"{name},{current_score}\n")
 
-        # B. RANK LOGIC
         all_scores = []
         if os.path.exists(RESULTS_PATH):
             with open(RESULTS_PATH, "r") as f:
@@ -69,15 +62,11 @@ def save_result():
 
         return jsonify({
             "status": "success", 
-            "message": "Result Save Ho Gaya!",
             "rank": rank,
             "total": total_participants
         })
     except Exception as e:
-        print(f"❌ Error in save_result: {e}")
         return jsonify({"status": "error", "message": str(e)})
 
-# --- 4. SERVER START ---
 if __name__ == "__main__":
-    # Local testing ke liye debug=True, Render ise apne aap handle karega
     app.run(debug=True)
