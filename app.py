@@ -4,17 +4,23 @@ from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
+# --- ZAROORI: FILE PATH KO DYNAMIC BANANA ---
+# Yeh line apne aap dhoond legi ki file kahan rakhi hai
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_PATH = os.path.join(BASE_DIR, 'questions.csv')
+RESULTS_PATH = os.path.join(BASE_DIR, 'web_results.txt')
+
 # --- 1. CSV SE SAWAL UTHANE KA LOGIC ---
 def get_questions():
     questions = []
-    path = "/Users/vikaschandra/Desktop/questions.csv"
-    if not os.path.exists(path):
-        print(f"❌ File nahi mili: {path}")
+    # Ab hum dynamic CSV_PATH use karenge
+    if not os.path.exists(CSV_PATH):
+        print(f"❌ File nahi mili: {CSV_PATH}")
         return []
     try:
-        with open(path, "r", encoding="utf-8-sig") as f:
+        with open(CSV_PATH, "r", encoding="utf-8-sig") as f:
             reader = csv.reader(f)
-            next(reader, None) # Pehli row (heading) skip karne ke liye
+            next(reader, None) # Pehli row skip
             for row in reader:
                 if len(row) >= 6:
                     questions.append({
@@ -31,7 +37,6 @@ def get_questions():
 @app.route("/")
 def home():
     all_data = get_questions()
-    # Dhyaan dein: HTML mein 'pittara' variable use ho raha hai
     return render_template("index.html", pittara=all_data)
 
 # --- 3. RESULT SAVE AUR RANK CALCULATE KARNE KA ROUTE ---
@@ -40,19 +45,16 @@ def save_result():
     try:
         data = request.json 
         name = data.get("name", "Anjan")
-        # Score ko number (float) mein badalna zaroori hai rank ke liye
         current_score = float(data.get("score", 0))
-
-        path = "/Users/vikaschandra/Desktop/web_results.txt"
         
-        # A. Naya result file mein save karein (Comma separated format for easy reading)
-        with open(path, "a") as f:
+        # A. Result save karein (Dynamic path use karke)
+        with open(RESULTS_PATH, "a") as f:
             f.write(f"{name},{current_score}\n")
 
-        # B. RANK LOGIC: Saari results padhkar rank nikalna
+        # B. RANK LOGIC
         all_scores = []
-        if os.path.exists(path):
-            with open(path, "r") as f:
+        if os.path.exists(RESULTS_PATH):
+            with open(RESULTS_PATH, "r") as f:
                 for line in f:
                     parts = line.strip().split(",")
                     if len(parts) == 2:
@@ -61,14 +63,9 @@ def save_result():
                         except:
                             continue
         
-        # Scores ko bade se chote (High to Low) sort karein
         all_scores.sort(reverse=True)
-        
-        # Rank dhoondna (index 0 se shuru hota hai isliye +1)
         rank = all_scores.index(current_score) + 1
         total_participants = len(all_scores)
-
-        print(f"✅ Result Saved: {name} | Score: {current_score} | Rank: {rank}")
 
         return jsonify({
             "status": "success", 
@@ -82,4 +79,5 @@ def save_result():
 
 # --- 4. SERVER START ---
 if __name__ == "__main__":
+    # Local testing ke liye debug=True, Render ise apne aap handle karega
     app.run(debug=True)
