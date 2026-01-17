@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognito IAS - Learning Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; }
+        .navbar { background: #2c3e50; color: white; padding: 15px; text-align: center; }
+        .hero { background: #3498db; color: white; padding: 40px; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; cursor: pointer; }
+        .card:hover { transform: translateY(-5px); }
+        .card i { font-size: 3em; color: #e67e22; margin-bottom: 10px; }
+        .whatsapp-btn { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; padding: 15px; border-radius: 50%; font-size: 24px; box-shadow: 2px 2px 10px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <h1>Cognito IAS Academy</h1>
+</div>
+
+<div class="hero">
+    <h2>Swagat hai, Vikas ji!</h2>
+    <p>Apne UPSC safar ko AI ki shakti se aage badhayein.</p>
+</div>
+
+<div class="grid">
+    {% for cat in categories %}
+    <div class="card" onclick="location.href='/subject/{{cat}}'">
+        <i class="fas fa-book-open"></i>
+        <h3>{{ cat }}</h3>
+        <p>Latest Posts aur Quizzes</p>
+    </div>
+    {% endfor %}
+</div>
+
+<a href="https://wa.me/91YOURNUMBER" class="whatsapp-btn">
+    <i class="fab fa-whatsapp"></i>
+</a>
+
+</body>
+</html>
