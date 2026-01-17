@@ -11,16 +11,22 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'c
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- AI SETUP (FORCE STABLE VERSION) ---
+# --- AI SETUP (AUTO-DETECT MODEL) ---
 api_key = os.environ.get("GEMINI_API_KEY")
+ai_model = None
 
 if api_key:
-    # Yahan hum version='v1' force kar rahe hain taaki beta wala error na aaye
-    genai.configure(api_key=api_key, transport='rest') 
-    # Hum 'gemini-1.5-flash' hi use karenge kyunki ye v1 stable mein maujood hai
-    ai_model = genai.GenerativeModel('gemini-1.5-flash')
-else:
-    ai_model = None
+    try:
+        genai.configure(api_key=api_key)
+        # Hum saare models ki list nikalenge aur pehla 'generateContent' wala model pakad lenge
+        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        if available_models:
+            # Aksar 'models/gemini-1.5-flash' ya 'models/gemini-pro' pehla hota hai
+            selected_model = available_models[0]
+            ai_model = genai.GenerativeModel(selected_model)
+            print(f"DEBUG: Selected Model is {selected_model}")
+    except Exception as e:
+        print(f"DEBUG: AI Setup Error: {e}")
 
 # --- MODELS ---
 class User(db.Model):
@@ -43,19 +49,17 @@ def home():
 @app.route("/generate_quiz", methods=["POST"])
 def generate_quiz():
     if not ai_model:
-        return jsonify({"status": "error", "message": "API Key missing!"})
+        return jsonify({"status": "error", "message": "AI Model detect nahi ho paya. API Key check karein."})
     
     data = request.json
-    topic = data.get("topic", "General Studies")
+    topic = data.get("topic", "UPSC GS")
     prompt = f"Create 5 UPSC level MCQs on {topic} in Hindi/English with options and answers."
     
     try:
-        # Latest 2026 way to call the model
         response = ai_model.generate_content(prompt)
         return jsonify({"status": "success", "quiz": response.text})
     except Exception as e:
-        # Agar error aaye toh humein pata chalega ki ye API version hai ya permission
-        return jsonify({"status": "error", "message": f"System Note: {str(e)}"})
+        return jsonify({"status": "error", "message": f"Run-time Error: {str(e)}"})
 
 if __name__ == "__main__":
     with app.app_context():
