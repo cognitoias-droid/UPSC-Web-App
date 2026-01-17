@@ -3,43 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cognito IAS - Learning Portal</title>
+    <title>Cognito IAS - AI Learning Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; }
-        .navbar { background: #2c3e50; color: white; padding: 15px; text-align: center; }
-        .hero { background: #3498db; color: white; padding: 40px; text-align: center; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; cursor: pointer; }
-        .card:hover { transform: translateY(-5px); }
-        .card i { font-size: 3em; color: #e67e22; margin-bottom: 10px; }
-        .whatsapp-btn { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; padding: 15px; border-radius: 50%; font-size: 24px; box-shadow: 2px 2px 10px rgba(0,0,0,0.2); }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; color: #333; }
+        .navbar { background: #2c3e50; color: white; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .container { max-width: 1000px; margin: auto; padding: 20px; }
+        .hero { background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 50px 20px; text-align: center; border-radius: 15px; margin-bottom: 30px; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; cursor: pointer; border-bottom: 4px solid #3498db; }
+        .card:hover { transform: translateY(-8px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .card i { font-size: 2.5em; color: #3498db; margin-bottom: 15px; }
+        
+        .ai-section { background: white; padding: 30px; border-radius: 15px; margin-top: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #d1d9e6; }
+        .ai-input { width: 75%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+        .ai-input:focus { border-color: #3498db; }
+        .ai-btn { padding: 15px 30px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        #ai-response { margin-top: 25px; padding: 20px; background: #f9fbff; border-left: 6px solid #3498db; display: none; text-align: left; white-space: pre-wrap; line-height: 1.6; }
+        
+        .whatsapp-btn { position: fixed; bottom: 30px; right: 30px; background: #25d366; color: white; padding: 18px; border-radius: 50%; font-size: 28px; box-shadow: 2px 5px 15px rgba(0,0,0,0.2); text-decoration: none; }
     </style>
 </head>
 <body>
 
 <div class="navbar">
-    <h1>Cognito IAS Academy</h1>
+    <h1>COGNITO IAS</h1>
 </div>
 
-<div class="hero">
-    <h2>Swagat hai, Vikas ji!</h2>
-    <p>Apne UPSC safar ko AI ki shakti se aage badhayein.</p>
-</div>
-
-<div class="grid">
-    {% for cat in categories %}
-    <div class="card" onclick="location.href='/subject/{{cat}}'">
-        <i class="fas fa-book-open"></i>
-        <h3>{{ cat }}</h3>
-        <p>Latest Posts aur Quizzes</p>
+<div class="container">
+    <div class="hero">
+        <h2>UPSC Migration: Python & AI Portal</h2>
+        <p>Subject-wise study, AI Quizzes, aur Students ka progress report - Sab ek jagah.</p>
     </div>
-    {% endfor %}
+
+    <div class="grid">
+        {% for cat in categories %}
+        <div class="card">
+            <i class="fas fa-university"></i>
+            <h3>{{ cat }}</h3>
+            <p>Notes & Tests</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="ai-section">
+        <h3><i class="fas fa-robot"></i> Magic AI Quiz Generator</h3>
+        <p>Koi bhi topic likhein, AI aapke liye UPSC MCQs taiyar kar dega.</p>
+        <input type="text" id="ai-topic" class="ai-input" placeholder="Topic likhein (e.g. Fundamental Rights ya Budget 2026)">
+        <button onclick="askAI()" class="ai-btn">Generate</button>
+        
+        <div id="ai-response"></div>
+    </div>
 </div>
 
-<a href="https://wa.me/91YOURNUMBER" class="whatsapp-btn">
+<a href="https://wa.me/91YOURNUMBER" class="whatsapp-btn" target="_blank">
     <i class="fab fa-whatsapp"></i>
 </a>
+
+<script>
+function askAI() {
+    let topic = document.getElementById('ai-topic').value;
+    let resDiv = document.getElementById('ai-response');
+    
+    if(!topic) { alert("Vikas ji, kripya koi topic likhein!"); return; }
+    
+    resDiv.style.display = "block";
+    resDiv.innerHTML = "⌛ <b>Cognito AI soch raha hai...</b> UPSC level ke sawal taiyar ho rahe hain...";
+
+    fetch('/generate_quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topic })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === "success") {
+            resDiv.innerHTML = "<h3>AI Generated MCQs:</h3><hr>" + data.quiz;
+        } else {
+            resDiv.innerHTML = "❌ Kuch galti hui: " + data.message;
+        }
+    })
+    .catch(err => {
+        resDiv.innerHTML = "❌ Server se sampark nahi ho paya. Render logs check karein.";
+    });
+}
+</script>
 
 </body>
 </html>
