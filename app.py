@@ -14,7 +14,7 @@ db = SQLAlchemy(app)
 
 # --- 2. AI SETUP (Gemini) ---
 # Yahan apni API Key dalein ya Render ki Environment Variable use karein
-genai.configure(api_key="YOUR_GEMINI_API_KEY") 
+genai.configure(api_key= AIzaSyCWF__5Y4OVI6NQCK77JNi2VKduVFPEUPo) 
 ai_model = genai.GenerativeModel('gemini-pro')
 
 # --- 3. DATABASE MODELS ---
