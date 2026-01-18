@@ -8,7 +8,6 @@ app = Flask(__name__)
 
 # --- 1. DATABASE CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Fresh start ke liye v4 use kar rahe hain
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v4.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -59,28 +58,51 @@ def home():
     except Exception as e:
         return f"Home Page Error: {str(e)}"
 
+# NAYA ROUTE: Category par click karne par uske andar ke topics dikhane ke liye
+@app.route("/category/<int:cat_id>")
+def view_category(cat_id):
+    cat = Category.query.get_or_404(cat_id)
+    return render_template("category_view.html", category=cat)
+
+# NAYA ROUTE: Poora Note (Post) padhne ke liye
+@app.route("/post/<int:post_id>")
+def view_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template("post_view.html", post=post)
+
 @app.route("/admin", methods=["GET", "POST"])
 def admin_panel():
     try:
         if request.method == "POST":
+            # 1. Category add karna
             if 'cat_name' in request.form:
                 name = request.form['cat_name']
                 if name:
-                    new_cat = Category(name=name)
-                    db.session.add(new_cat)
+                    db.session.add(Category(name=name))
             
+            # 2. Sub-Category add karna
             if 'subcat_name' in request.form:
                 sub_name = request.form['subcat_name']
                 parent_id = request.form['parent_id']
                 if sub_name and parent_id:
-                    new_sub = SubCategory(name=sub_name, category_id=parent_id)
-                    db.session.add(new_sub)
+                    db.session.add(SubCategory(name=sub_name, category_id=parent_id))
+
+            # 3. NAYA: Post (Notes) add karna
+            if 'post_title' in request.form:
+                p_title = request.form['post_title']
+                p_content = request.form['post_content']
+                p_sub_id = request.form['sub_id']
+                if p_title and p_content and p_sub_id:
+                    new_post = Post(title=p_title, content=p_content, sub_category_id=p_sub_id)
+                    db.session.add(new_post)
             
             db.session.commit()
             return redirect(url_for('admin_panel'))
 
         categories = Category.query.all()
-        return render_template("admin.html", categories=categories)
+        # Post form ke dropdown ke liye saari subcategories
+        subcategories = SubCategory.query.all() 
+        return render_template("admin.html", categories=categories, subcategories=subcategories)
     except Exception as e:
         return f"Admin Panel Error: {str(e)}"
 
@@ -106,28 +128,23 @@ def generate_quiz():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
-# --- 6. DATA IMPORT ROUTE (SIRF EK BAAR CHALANA HAI) ---
 @app.route("/import_my_data")
 def import_data():
     try:
-        # 1. Purani Categories banana
         subjects = ["History", "Geography", "Polity", "Economics", "Current Affairs"]
         for sub in subjects:
             if not Category.query.filter_by(name=sub).first():
                 db.session.add(Category(name=sub))
         db.session.commit()
 
-        # 2. History mein ek sample post add karna
         history = Category.query.filter_by(name="History").first()
         if history:
-            # Check if subcategory already exists
             sub = SubCategory.query.filter_by(name="Ancient India", category_id=history.id).first()
             if not sub:
                 sub = SubCategory(name="Ancient India", category_id=history.id)
                 db.session.add(sub)
                 db.session.commit()
             
-            # Add sample post
             p = Post(title="Indus Valley Civilization", content="Indus Valley Civilization notes by Vikas Ji.", sub_category_id=sub.id)
             db.session.add(p)
             db.session.commit()
