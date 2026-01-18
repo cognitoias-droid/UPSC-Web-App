@@ -8,17 +8,27 @@ app = Flask(__name__)
 
 # --- 1. DATABASE CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Hum v4 hi rakhenge taaki aapka mehnat se dala gaya data delete na ho
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v4.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- 2. AI SETUP ---
+# --- 2. AI SETUP (SMART AUTO-DETECT) ---
 api_key = os.environ.get("GEMINI_API_KEY")
+ai_model = None
+
 if api_key:
-    genai.configure(api_key=api_key)
-    ai_model = genai.GenerativeModel('gemini-1.5-flash')
-else:
-    ai_model = None
+    try:
+        genai.configure(api_key=api_key)
+        # Aapka purana pasandida logic: Available models ki list nikalna
+        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        if available_models:
+            # Sabse naya model auto-select hoga
+            selected_model = available_models[0]
+            ai_model = genai.GenerativeModel(selected_model)
+            print(f"DEBUG: Successfully connected to {selected_model}")
+    except Exception as e:
+        print(f"DEBUG: AI Setup Error: {e}")
 
 # --- 3. DYNAMIC DATABASE MODELS ---
 class Category(db.Model):
@@ -58,13 +68,11 @@ def home():
     except Exception as e:
         return f"Home Page Error: {str(e)}"
 
-# NAYA ROUTE: Category par click karne par uske andar ke topics dikhane ke liye
 @app.route("/category/<int:cat_id>")
 def view_category(cat_id):
     cat = Category.query.get_or_404(cat_id)
     return render_template("category_view.html", category=cat)
 
-# NAYA ROUTE: Poora Note (Post) padhne ke liye
 @app.route("/post/<int:post_id>")
 def view_post(post_id):
     post = Post.query.get_or_404(post_id)
@@ -74,33 +82,24 @@ def view_post(post_id):
 def admin_panel():
     try:
         if request.method == "POST":
-            # 1. Category add karna
             if 'cat_name' in request.form:
-                name = request.form['cat_name']
-                if name:
-                    db.session.add(Category(name=name))
+                db.session.add(Category(name=request.form['cat_name']))
             
-            # 2. Sub-Category add karna
             if 'subcat_name' in request.form:
-                sub_name = request.form['subcat_name']
-                parent_id = request.form['parent_id']
-                if sub_name and parent_id:
-                    db.session.add(SubCategory(name=sub_name, category_id=parent_id))
+                db.session.add(SubCategory(name=request.form['subcat_name'], category_id=request.form['parent_id']))
 
-            # 3. NAYA: Post (Notes) add karna
             if 'post_title' in request.form:
-                p_title = request.form['post_title']
-                p_content = request.form['post_content']
-                p_sub_id = request.form['sub_id']
-                if p_title and p_content and p_sub_id:
-                    new_post = Post(title=p_title, content=p_content, sub_category_id=p_sub_id)
-                    db.session.add(new_post)
+                new_post = Post(
+                    title=request.form['post_title'], 
+                    content=request.form['post_content'], 
+                    sub_category_id=request.form['sub_id']
+                )
+                db.session.add(new_post)
             
             db.session.commit()
             return redirect(url_for('admin_panel'))
 
         categories = Category.query.all()
-        # Post form ke dropdown ke liye saari subcategories
         subcategories = SubCategory.query.all() 
         return render_template("admin.html", categories=categories, subcategories=subcategories)
     except Exception as e:
@@ -109,49 +108,28 @@ def admin_panel():
 @app.route("/generate_quiz", methods=["POST"])
 def generate_quiz():
     if not ai_model:
-        return jsonify({"status": "error", "message": "API Key missing!"})
+        return jsonify({"status": "error", "message": "AI System taiyar nahi hai. API Key check karein."})
     
     data = request.json
-    topic = data.get("topic", "UPSC")
-    prompt = f'Create 5 UPSC MCQs on {topic}. Return ONLY a JSON list. Format: [{{"question": "...", "options": ["A", "B", "C", "D"], "answer": "A", "explanation": "..."}}]'
+    topic = data.get("topic", "UPSC GS")
+    
+    # Hum AI se JSON mangenge taaki aapka interactive quiz (click wala) chalta rahe
+    prompt = f'Create 5 UPSC level MCQs on {topic}. Return ONLY a JSON list. Format: [{{"question": "...", "options": ["A", "B", "C", "D"], "answer": "A", "explanation": "..."}}]'
     
     try:
         response = ai_model.generate_content(prompt)
-        raw_text = response.text.strip().replace('```json', '').replace('```', '')
+        raw_text = response.text.strip()
+        
+        # Clean JSON markdown if AI adds it
+        if "```json" in raw_text:
+            raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_text:
+            raw_text = raw_text.split("```")[1].split("```")[0].strip()
+            
         quiz_json = json.loads(raw_text)
-        
-        new_quiz = Quiz(topic=topic, question_data=raw_text)
-        db.session.add(new_quiz)
-        db.session.commit()
-        
         return jsonify({"status": "success", "quiz": quiz_json})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
-
-@app.route("/import_my_data")
-def import_data():
-    try:
-        subjects = ["History", "Geography", "Polity", "Economics", "Current Affairs"]
-        for sub in subjects:
-            if not Category.query.filter_by(name=sub).first():
-                db.session.add(Category(name=sub))
-        db.session.commit()
-
-        history = Category.query.filter_by(name="History").first()
-        if history:
-            sub = SubCategory.query.filter_by(name="Ancient India", category_id=history.id).first()
-            if not sub:
-                sub = SubCategory(name="Ancient India", category_id=history.id)
-                db.session.add(sub)
-                db.session.commit()
-            
-            p = Post(title="Indus Valley Civilization", content="Indus Valley Civilization notes by Vikas Ji.", sub_category_id=sub.id)
-            db.session.add(p)
-            db.session.commit()
-            
-        return "Mubarak ho! Purana data naye system mein shift ho gaya hai. Ab Home page check karein."
-    except Exception as e:
-        return f"Import Error: {str(e)}"
+        return jsonify({"status": "error", "message": f"AI Generation failed: {str(e)}"})
 
 if __name__ == "__main__":
     app.run(debug=True)
