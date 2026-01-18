@@ -1,200 +1,95 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cognito IAS - Master Admin</title>
+    <meta charset="UTF-8"><title>Master Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.ckeditor.com/4.19.1/standard/ckeditor.js"></script>
-
     <style>
-        :root { --primary: #2c3e50; --blue: #3498db; --green: #27ae60; --orange: #e67e22; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; display: flex; }
-        .sidebar { width: 260px; background: var(--primary); height: 100vh; position: fixed; color: white; padding: 20px; box-sizing: border-box; }
-        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 30px; border-top: 5px solid var(--blue); }
-        .sidebar h2 { color: var(--blue); margin-bottom: 30px; }
-        .sidebar a { display: block; color: #bdc3c7; text-decoration: none; margin: 15px 0; transition: 0.3s; }
-        .sidebar a:hover { color: white; transform: translateX(5px); }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .btn { border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; width: 100%; transition: 0.3s; margin-top: 5px; }
-        .btn-blue { background: var(--blue); }
-        .btn-green { background: var(--green); }
-        .btn-orange { background: var(--orange); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background: #f8f9fa; }
-        .ai-box { background: #fff5e6; padding: 15px; border-radius: 8px; border-left: 5px solid var(--orange); margin-bottom: 15px; }
+        body { font-family: sans-serif; display: flex; margin: 0; background: #f4f7f6; }
+        .sidebar { width: 250px; background: #2c3e50; color: white; height: 100vh; position: fixed; padding: 20px; }
+        .main { margin-left: 270px; padding: 30px; width: 100%; }
+        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-top: 4px solid #3498db; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; }
+        .btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; color: white; font-weight: bold; }
+        .btn-blue { background: #3498db; } .btn-green { background: #27ae60; } .btn-orange { background: #e67e22; }
     </style>
 </head>
 <body>
-
 <div class="sidebar">
     <h2>Cognito Admin</h2>
-    <a href="#students"><i class="fas fa-users"></i> Student Manager</a>
-    <a href="#material"><i class="fas fa-book"></i> Study Material Editor</a>
-    <a href="#quiz"><i class="fas fa-stopwatch"></i> Weekly Test Manager</a>
-    <a href="#structure"><i class="fas fa-sitemap"></i> Subject Structure</a>
-    <hr>
-    <a href="/"><i class="fas fa-home"></i> View Website</a>
+    <a href="#structure" style="color:white;display:block;margin:10px 0;">Structure</a>
+    <a href="#material" style="color:white;display:block;margin:10px 0;">Material & AI</a>
+    <a href="#quiz" style="color:white;display:block;margin:10px 0;">Quiz Builder</a>
+    <a href="#video" style="color:white;display:block;margin:10px 0;">Video Lectures</a>
 </div>
 
-<div class="main-content">
-    <h1>Master Admin Control</h1>
+<div class="main">
+    <h1>Final Control Panel</h1>
+
+    <div id="structure" class="card">
+        <h3>1. Subject & Topic Manager</h3>
+        <form method="POST"><input type="text" name="cat_name" placeholder="New Subject"><button class="btn btn-green">Add Subject</button></form>
+        <form method="POST">
+            <select name="parent_id">{% for c in categories %}<option value="{{c.id}}">{{c.name}}</option>{% endfor %}</select>
+            <input type="text" name="subcat_name" placeholder="New Topic"><button class="btn btn-green">Add Topic</button>
+        </form>
+    </div>
 
     <div id="material" class="card">
-        <h2><i class="fas fa-pen-nib"></i> AI Note Generator & Editor</h2>
-        <div class="ai-box">
-            <label><b>AI Topic:</b> UPSC Level notes likhwane ke liye topic daalein</label>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <input type="text" id="ai_topic_input" placeholder="e.g. Bhakti Movement ya Cyber Security" style="flex: 1; padding: 10px;">
-                <button type="button" onclick="generateAI()" class="btn btn-orange" style="width: auto;">Generate Notes</button>
-            </div>
-        </div>
-
+        <h3>2. AI Notes Generator</h3>
+        <input type="text" id="ai_topic" placeholder="Enter Topic Name">
+        <button onclick="askAI()" class="btn btn-orange">AI se Likhein</button>
         <form method="POST">
-            <input type="text" name="post_title" id="post_title" placeholder="Title of the Note..." required style="margin-bottom:15px; padding: 10px;">
-            <select name="sub_id" style="margin-bottom:15px; padding: 10px;">
-                {% for sub in subcategories %}
-                <option value="{{ sub.id }}">{{ sub.parent_category.name }} -> {{ sub.name }}</option>
-                {% endfor %}
-            </select>
-            
-            <textarea name="post_content" id="editor_fixed"></textarea>
-            
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button type="submit" class="btn btn-blue">Publish to Website</button>
-                <button type="button" onclick="createTestFromNotes()" class="btn btn-green">Is Content se AI Test Banayein</button>
-            </div>
+            <input type="text" name="post_title" id="p_title" placeholder="Title">
+            <select name="p_sub_id">{% for s in subcategories %}<option value="{{s.id}}">{{s.name}}</option>{% endfor %}</select>
+            <textarea name="post_content" id="editor_post"></textarea>
+            <button class="btn btn-blue">Publish Post</button>
         </form>
     </div>
 
-    <div id="quiz" class="card" style="border-top-color: var(--orange);">
-        <h2><i class="fas fa-question-circle"></i> Manual Topic-wise Test</h2>
+    <div id="quiz" class="card">
+        <h3>3. Professional Quiz Builder</h3>
         <form method="POST">
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Timer (Minutes)</label>
-                    <input type="number" name="t_limit" value="10">
-                </div>
-                <div class="form-group">
-                    <label>Negative Marking</label>
-                    <input type="number" step="0.01" name="n_marking" value="0.33">
-                </div>
-            </div>
-            <div class="form-group" style="margin-top: 10px;">
-                <label>Target Topic (Kis topic ka test hai?)</label>
-                <select name="quiz_sub_id">
-                    {% for sub in subcategories %}
-                    <option value="{{ sub.id }}">{{ sub.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <hr>
-            <label>Question Statement (UPSC Style)</label>
-            <textarea name="q_text" rows="4" placeholder="1. Statement one... &#10;2. Statement two..."></textarea>
-            <div class="grid-2" style="margin-top:10px;">
-                <input type="text" name="opt_a" placeholder="Option A">
-                <input type="text" name="opt_b" placeholder="Option B">
-                <input type="text" name="opt_c" placeholder="Option C">
-                <input type="text" name="opt_d" placeholder="Option D">
-            </div>
-            <label style="margin-top:10px;">Correct Answer (A, B, C, or D)</label>
-            <input type="text" name="q_ans" maxlength="1" placeholder="A">
-            <button type="submit" class="btn btn-orange" style="margin-top:15px;">Save to Question Bank</button>
+            <input type="text" name="quiz_topic" placeholder="Quiz Topic Name">
+            <textarea name="quiz_desc" placeholder="Instructions..."></textarea>
+            <select name="sub_id">{% for s in subcategories %}<option value="{{s.id}}">{{s.name}}</option>{% endfor %}</select>
+            <div style="display:flex;gap:10px;"><input type="number" name="time" placeholder="Time (Min)"><input type="number" step="0.01" name="neg" placeholder="Neg Marking"></div>
+            <button class="btn btn-blue">Step 1: Create Quiz Header</button>
+        </form>
+        <hr>
+        <h4>Add Questions with Editor</h4>
+        <form method="POST">
+            <select name="target_quiz">{% for q in quizzes %}<option value="{{q.id}}">{{q.topic}}</option>{% endfor %}</select>
+            <textarea name="q_text" id="editor_q"></textarea>
+            <input type="text" name="oa" placeholder="Option A"><input type="text" name="ob" placeholder="Option B">
+            <input type="text" name="oc" placeholder="Option C"><input type="text" name="od" placeholder="Option D">
+            <textarea name="exp" id="editor_exp"></textarea>
+            <select name="ans"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>
+            <button class="btn btn-orange">Step 2: Save Question</button>
         </form>
     </div>
 
-    <div id="students" class="card">
-        <h2><i class="fas fa-user-plus"></i> Student Manager</h2>
+    <div id="video" class="card">
+        <h3>4. Video Lecture Manager</h3>
         <form method="POST">
-            <div class="grid-2">
-                <input type="text" name="new_student_id" placeholder="Student ID (COGNITO001)" required style="padding: 10px;">
-                <input type="password" name="new_pwd" placeholder="Password" required style="padding: 10px;">
-            </div>
-            <button type="submit" class="btn btn-blue" style="margin-top:10px;">Register Student</button>
+            <input type="text" name="video_title" placeholder="Video Title">
+            <input type="text" name="video_url" placeholder="YouTube URL">
+            <select name="v_sub_id">{% for s in subcategories %}<option value="{{s.id}}">{{s.name}}</option>{% endfor %}</select>
+            <button class="btn btn-blue">Add Video</button>
         </form>
-        <h3>Active Students</h3>
-        <div style="max-height: 300px; overflow-y: auto;">
-            <table>
-                <tr><th>ID</th><th>Role</th><th>Action</th></tr>
-                {% for user in students %}
-                <tr><td>{{ user.username }}</td><td>{{ user.role }}</td><td><button class="btn btn-orange" style="width:auto; padding:5px 10px; font-size: 12px;">Delete</button></td></tr>
-                {% endfor %}
-            </table>
-        </div>
-    </div>
-
-    <div id="structure" class="card" style="border-top-color: var(--green);">
-        <h2><i class="fas fa-folder-plus"></i> Subject Structure</h2>
-        <div class="grid-2">
-            <form method="POST">
-                <label>Add Subject</label>
-                <input type="text" name="cat_name" placeholder="History, Geography..." required>
-                <button type="submit" class="btn btn-green">Add</button>
-            </form>
-            <form method="POST">
-                <label>Add Topic to Subject</label>
-                <select name="parent_id">
-                    {% for cat in categories %}
-                    <option value="{{ cat.id }}">{{ cat.name }}</option>
-                    {% endfor %}
-                </select>
-                <input type="text" name="subcat_name" placeholder="Topic Name" required style="margin-top:10px;">
-                <button type="submit" class="btn btn-green">Add</button>
-            </form>
-        </div>
     </div>
 </div>
 
 <script>
-    // CKEDITOR Initial Load
-    window.onload = function() {
-        if (typeof CKEDITOR !== 'undefined') {
-            CKEDITOR.replace('editor_fixed', { height: 400 });
-        }
-    };
+    CKEDITOR.replace('editor_post');
+    CKEDITOR.replace('editor_q');
+    CKEDITOR.replace('editor_exp');
 
-    // AI Feature 1: Write Notes
-    async function generateAI() {
-        let topic = document.getElementById('ai_topic_input').value;
-        if(!topic) return alert("Vikas ji, topic likhna zaroori hai!");
-        
-        let btn = event.target;
-        btn.innerText = "Likh raha hoon...";
-        btn.disabled = true;
-
-        const res = await fetch('/ai_write', {
-            method:'POST', 
-            headers:{'Content-Type':'application/json'}, 
-            body:JSON.stringify({topic:topic})
-        });
+    async function askAI() {
+        let topic = document.getElementById('ai_topic').value;
+        const res = await fetch('/ai_action', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt: "Write UPSC notes on " + topic + " with HTML tags"})});
         const data = await res.json();
-        CKEDITOR.instances.editor_fixed.setData(data.content);
-        
-        btn.innerText = "Generate Notes";
-        btn.disabled = false;
-    }
-
-    // AI Feature 2: Create Test from Editor
-    async function createTestFromNotes() {
-        let content = CKEDITOR.instances.editor_fixed.getData();
-        if(!content) return alert("Pehle content likhein!");
-        
-        let btn = event.target;
-        btn.innerText = "Questions bana raha hoon...";
-        btn.disabled = true;
-
-        const res = await fetch('/ai_create_test', {
-            method:'POST', 
-            headers:{'Content-Type':'application/json'}, 
-            body:JSON.stringify({content:content})
-        });
-        const data = await res.json();
-        alert("Weekly Test taiyar ho gaya! Questions Bank mein check karein.");
-        
-        btn.innerText = "Is Content se AI Test Banayein";
-        btn.disabled = false;
+        CKEDITOR.instances.editor_post.setData(data.result);
     }
 </script>
 </body>
