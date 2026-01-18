@@ -9,32 +9,19 @@
         :root { --primary: #2c3e50; --success: #27ae60; --warning: #f1c40f; --danger: #e74c3c; --blue: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; }
         .navbar { background: var(--primary); color: white; padding: 10px 20px; text-align: center; font-weight: bold; }
-        
         .test-container { display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 20px; max-width: 1400px; margin: auto; }
-        
         .question-area { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-height: 500px; position: relative; }
         .q-text { font-size: 1.25rem; line-height: 1.6; margin-bottom: 25px; white-space: pre-line; }
-        
         .option-label { display: block; padding: 15px; margin: 12px 0; background: #fff; border: 2px solid #eee; border-radius: 8px; cursor: pointer; transition: 0.3s; }
         .option-label:hover { border-color: var(--blue); background: #f0f7ff; }
-        input[type="radio"]:checked + span { font-weight: bold; color: var(--blue); }
-
         .side-panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 20px; }
         #timer { font-size: 1.8rem; font-weight: bold; color: var(--danger); text-align: center; margin-bottom: 20px; padding: 10px; border: 2px solid var(--danger); border-radius: 8px; }
-        
         .q-number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 15px; }
-        .q-btn { width: 42px; height: 42px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; font-weight: bold; transition: 0.2s; }
-        
-        /* Status Colors */
-        .attempted { background: var(--success) !important; color: white; border-color: var(--success); }
-        .skipped { background: var(--warning) !important; color: white; border-color: var(--warning); }
-        .current { border: 3px solid var(--blue) !important; transform: scale(1.1); }
-
-        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
-        .btn-nav { background: var(--primary); }
-        .btn-ai { background: #8e44ad; margin-top: 15px; }
-        
-        #ai-response { margin-top: 15px; padding: 15px; background: #f9f0ff; border-left: 4px solid #8e44ad; display: none; border-radius: 4px; }
+        .q-btn { width: 42px; height: 42px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; font-weight: bold; }
+        .attempted { background: var(--success) !important; color: white; }
+        .skipped { background: var(--warning) !important; color: white; }
+        .current { border: 3px solid var(--blue) !important; }
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
     </style>
 </head>
 <body>
@@ -43,14 +30,12 @@
 
 <div class="test-container">
     <div class="question-area">
-        <div id="question-content">
-            </div>
-        
-        <button onclick="askAI()" class="btn btn-ai"><i class="fas fa-robot"></i> Ask AI: Samjhaiye is sawal ko</button>
-        <div id="ai-response"></div>
+        <div id="question-content"></div>
+        <button onclick="askAI()" class="btn" style="background: #8e44ad; margin-top: 15px;"><i class="fas fa-robot"></i> Ask AI: Samjhaiye is sawal ko</button>
+        <div id="ai-response" style="margin-top: 15px; padding: 15px; background: #f9f0ff; border-left: 4px solid #8e44ad; display: none;"></div>
 
         <div style="margin-top: 40px; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 20px;">
-            <button onclick="prevQuestion()" class="btn btn-nav" style="background:#7f8c8d;">Previous</button>
+            <button onclick="prevQuestion()" class="btn" style="background:#7f8c8d;">Previous</button>
             <button onclick="markAsSkipped()" class="btn" style="background:var(--warning);">Mark for Review</button>
             <button onclick="nextQuestion()" class="btn" style="background:var(--success);">Save & Next</button>
         </div>
@@ -58,22 +43,15 @@
 
     <div class="side-panel">
         <div id="timer">Time <span id="time-val">00:00</span></div>
-        
         <h4 style="margin:0;">Question Palette</h4>
         <div class="q-number-grid" id="palette"></div>
-        
-        <div style="margin-top: 25px; font-size: 0.85rem; border-top: 1px solid #eee; padding-top: 15px;">
-            <div style="margin-bottom:5px;"><span style="color:var(--success);">●</span> Answered</div>
-            <div style="margin-bottom:5px;"><span style="color:var(--warning);">●</span> Marked for Review</div>
-            <div><span style="color:#ddd;">●</span> Not Visited</div>
-        </div>
-
-        <button onclick="submitTest()" class="btn" style="background:var(--danger); width: 100%; margin-top: 30px; font-size: 1.1rem;">Final Submit</button>
+        <button onclick="submitTest()" class="btn" style="background:var(--danger); width: 100%; margin-top: 30px;">Final Submit</button>
     </div>
 </div>
 
 <script>
     let questions = {{ questions|tojson }};
+    let quizId = {{ quiz.id }};
     let currentIdx = 0;
     let userAnswers = new Array(questions.length).fill(null);
     let status = new Array(questions.length).fill('unvisited');
@@ -91,96 +69,53 @@
         currentIdx = idx;
         let q = questions[currentIdx];
         let savedAns = userAnswers[currentIdx];
-
-        let html = `
-            <h3 style="color:var(--primary);">Question ${currentIdx + 1}</h3>
+        document.getElementById('question-content').innerHTML = `
+            <h3>Question ${currentIdx + 1}</h3>
             <div class="q-text">${q.question}</div>
-            <div id="options-box">
-                ${q.options.map((opt, i) => {
-                    let letter = String.fromCharCode(65 + i); // A, B, C, D
-                    let checked = (savedAns === letter) ? 'checked' : '';
-                    return `
-                        <label class="option-label">
-                            <input type="radio" name="q_ans" value="${letter}" ${checked} onclick="saveAnswer('${letter}')">
-                            <span>${opt}</span>
-                        </label>
-                    `;
-                }).join('')}
-            </div>
+            ${['A','B','C','D'].map((l, i) => `
+                <label class="option-label">
+                    <input type="radio" name="q_ans" value="${l}" ${savedAns === l ? 'checked' : ''} onclick="saveAnswer('${l}')">
+                    <span>${q.options[i]}</span>
+                </label>
+            `).join('')}
         `;
-        document.getElementById('question-content').innerHTML = html;
-        document.getElementById('ai-response').style.display = 'none';
         renderPalette();
     }
 
-    function saveAnswer(letter) {
-        userAnswers[currentIdx] = letter;
-        status[currentIdx] = 'attempted';
-        renderPalette();
-    }
+    function saveAnswer(letter) { userAnswers[currentIdx] = letter; status[currentIdx] = 'attempted'; renderPalette(); }
+    function markAsSkipped() { status[currentIdx] = 'skipped'; nextQuestion(); }
+    function nextQuestion() { if (currentIdx < questions.length - 1) goToQuestion(currentIdx + 1); }
+    function prevQuestion() { if (currentIdx > 0) goToQuestion(currentIdx - 1); }
 
-    function markAsSkipped() {
-        status[currentIdx] = 'skipped';
-        nextQuestion();
-    }
+    async function submitTest() {
+        if(!confirm("Submit karein?")) return;
+        
+        let score = 0;
+        questions.forEach((q, i) => {
+            if(userAnswers[i] === q.correct) score += 1;
+            else if(userAnswers[i] !== null) score -= {{ quiz.neg_marking }};
+        });
 
-    function nextQuestion() {
-        if (currentIdx < questions.length - 1) {
-            goToQuestion(currentIdx + 1);
+        const res = await fetch('/submit_score', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({quiz_id: quizId, score: score})
+        });
+
+        if(res.ok) {
+            // REDIRECTION TO RANK LIST
+            window.location.href = '/rankings/' + quizId;
         }
     }
 
-    function prevQuestion() {
-        if (currentIdx > 0) {
-            goToQuestion(currentIdx - 1);
-        }
-    }
-
-    // AI Doubt Solver Logic
-    async function askAI() {
-        let q = questions[currentIdx];
-        let box = document.getElementById('ai-response');
-        box.style.display = 'block';
-        box.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI soch raha hai...';
-
-        // Direct call to Gemini or your AI Route
-        try {
-            const res = await fetch('/generate_quiz', { // Using your existing AI route pattern
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({topic: "Explain this UPSC question: " + q.question})
-            });
-            const data = await res.json();
-            box.innerHTML = `<b>AI Vishleshan:</b><br>${data.quiz[0].explanation || "Sawal ka gehra arth samjhein..."}`;
-        } catch (e) {
-            box.innerHTML = "Maf kijiyega Vikas ji, AI abhi offline hai.";
-        }
-    }
-
-    function submitTest() {
-        if(confirm("Kya aap sach mein test submit karna chahte hain?")) {
-            alert("Test Submitted! Aapka score jald hi Dashboard par dikhega.");
-            window.location.href = "/";
-        }
-    }
-
-    // Timer Logic
     let timeLeft = {{ quiz.time_limit }} * 60;
-    let timerInterval = setInterval(() => {
-        let m = Math.floor(timeLeft / 60);
-        let s = timeLeft % 60;
+    setInterval(() => {
+        let m = Math.floor(timeLeft / 60); let s = timeLeft % 60;
         document.getElementById('time-val').innerText = `${m}:${s < 10 ? '0'+s : s}`;
-        if(timeLeft <= 0) {
-            clearInterval(timerInterval);
-            alert("Time Up! Test automatically submit ho raha hai.");
-            submitTest();
-        }
-        timeLeft--;
+        if(timeLeft-- <= 0) submitTest();
     }, 1000);
 
-    // Initial Load
     goToQuestion(0);
 </script>
-
 </body>
 </html>
