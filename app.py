@@ -175,6 +175,17 @@ def take_test(quiz_id):
     # Yahan humne naya test interface joda hai
     quiz = Quiz.query.get_or_404(quiz_id)
     return render_template("test_interface.html", quiz=quiz)
-
+@app.route("/create_my_admin")
+def create_my_admin():
+    # Check karein agar admin pehle se hai
+    existing = User.query.filter_by(username="admin").first()
+    if not existing:
+        hashed_pwd = generate_password_hash("cognito123") # Aapka password
+        new_admin = User(username="admin", password=hashed_pwd, role="admin")
+        db.session.add(new_admin)
+        db.session.commit()
+        return "Mubarak ho! Admin ID: 'admin' aur Password: 'cognito123' set ho gaya hai. Ab login karein."
+    return "Admin pehle se bana hua hai."
+    
 if __name__ == "__main__":
     app.run(debug=True)
