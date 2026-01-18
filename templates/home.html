@@ -11,28 +11,30 @@
         .navbar { background: var(--primary); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
         
-        /* Category Grid */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
         .card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; border-top: 5px solid var(--secondary); text-decoration: none; color: inherit; display: block; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); cursor: pointer; }
         .card h3 { margin: 0.5rem 0; color: var(--primary); }
-        .card p { font-size: 0.9rem; color: #666; }
 
-        /* AI Quiz Section */
         .ai-section { background: white; padding: 2rem; border-radius: 15px; margin-top: 3rem; border: 1px solid #ddd; }
         .ai-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; color: var(--secondary); }
         .input-group { display: flex; gap: 10px; margin-bottom: 1.5rem; }
         input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
         .btn { background: var(--secondary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         
-        /* Interactive Quiz Layout */
         .quiz-container { margin-top: 2rem; display: none; }
         .question-card { background: #fff; padding: 1.5rem; border-radius: 10px; border-left: 5px solid var(--secondary); margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .option-label { display: block; padding: 10px; margin: 5px 0; background: #f9f9f9; border-radius: 5px; cursor: pointer; border: 1px solid #eee; }
-        .option-label:hover { background: #edf7ff; }
-        .correct { background: #d4edda !important; border-color: #c3e6cb !important; }
-        .wrong { background: #f8d7da !important; border-color: #f5c6cb !important; }
-        .explanation { margin-top: 10px; padding: 10px; background: #e7f3fe; border-radius: 5px; font-size: 0.9rem; display: none; }
+        
+        /* New line support for UPSC statements */
+        .q-text { white-space: pre-line; line-height: 1.6; font-size: 1.05rem; margin-bottom: 15px; }
+
+        .option-label { display: block; padding: 12px; margin: 8px 0; background: #f9f9f9; border-radius: 8px; cursor: pointer; border: 1px solid #eee; transition: 0.2s; }
+        .option-label:hover { background: #edf7ff; border-color: var(--secondary); }
+        
+        .correct { background: #d4edda !important; border-color: #28a745 !important; color: #155724; font-weight: bold; }
+        .wrong { background: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; font-weight: bold; }
+        
+        .explanation { margin-top: 15px; padding: 15px; background: #e7f3fe; border-radius: 8px; font-size: 0.95rem; display: none; border-left: 4px solid var(--secondary); }
     </style>
 </head>
 <body>
@@ -68,18 +70,17 @@
             <i class="fas fa-robot fa-2x"></i>
             <h3>Magic AI Test Generator (Interactive)</h3>
         </div>
-        <p>Topic likhein aur AI turant click karne wala test taiyar kar dega.</p>
+        <p>Topic likhein aur AI turant UPSC format mein test taiyar kar dega.</p>
         <div class="input-group">
-            <input type="text" id="quiz-topic" placeholder="e.g. Indus Valley Civilization ya Current Affairs Jan 2026">
+            <input type="text" id="quiz-topic" placeholder="e.g. Harappan Civilization">
             <button onclick="generateInteractiveQuiz()" class="btn" id="gen-btn">Generate Test</button>
         </div>
 
         <div id="quiz-loading" style="display:none; text-align:center;">
-            <i class="fas fa-spinner fa-spin fa-2x"></i> <p>AI UPSC level ke sawal taiyar kar raha hai...</p>
+            <i class="fas fa-spinner fa-spin fa-2x"></i> <p>AI UPSC level ke sawal drafting kar raha hai...</p>
         </div>
 
-        <div id="quiz-display" class="quiz-container">
-            </div>
+        <div id="quiz-display" class="quiz-container"></div>
     </div>
 </div>
 
@@ -105,26 +106,36 @@ async function generateInteractiveQuiz() {
         const data = await response.json();
 
         if(data.status === "success") {
-            let html = `<h3>Topic: ${topic}</h3><hr>`;
+            let html = `<h2 style="color:var(--primary);">Test Topic: ${topic}</h2><hr>`;
             data.quiz.forEach((q, qIndex) => {
-                // Formatting Logic: Statements ko nayi line mein bold karke layega
+                // Formatting: Statements ko bold line breaks ke sath dikhana
                 let formattedQuestion = q.question.replace(/(\d+)\./g, '<br><b>$1.</b>');
+                
+                // Indexing Letters
+                const letters = ['A', 'B', 'C', 'D'];
 
                 html += `
                 <div class="question-card">
-                    <p style="font-size: 1.05rem; line-height: 1.6;">
+                    <div class="q-text">
                         <b>Q${qIndex+1}.</b> ${formattedQuestion}
-                    </p>
+                    </div>
                     <div id="options-${qIndex}">
-                        ${q.options.map(opt => `
-                            <label class="option-label" onclick="checkAnswer(this, '${opt}', '${q.answer}', 'exp-${qIndex}')">
-                                ${opt}
-                            </label>
-                        `).join('')}
+                        ${q.options.map((opt, i) => {
+                            // Agar AI ne A, B, C nahi bheja toh hum yahan se jodd denge
+                            let optionText = opt.trim();
+                            if(!optionText.match(/^[A-D][\.\)]/)) {
+                                optionText = `<b>${letters[i]}.</b> ${optionText}`;
+                            }
+                            return `
+                                <label class="option-label" onclick="checkAnswer(this, '${letters[i]}', '${q.answer}', 'exp-${qIndex}')">
+                                    ${optionText}
+                                </label>
+                            `;
+                        }).join('')}
                     </div>
                     <div id="exp-${qIndex}" class="explanation">
-                        <b style="color: var(--success);">Sahi Uttar: ${q.answer}</b>
-                        <p style="margin-top: 5px;">${q.explanation}</p>
+                        <b style="color: var(--primary);">Correct Answer: ${q.answer}</b><br>
+                        <p style="margin-top:8px;">${q.explanation}</p>
                     </div>
                 </div>`;
             });
@@ -141,21 +152,26 @@ async function generateInteractiveQuiz() {
     }
 }
 
-function checkAnswer(element, selected, correct, expId) {
+function checkAnswer(element, selectedLetter, correctStr, expId) {
     const parent = element.parentElement;
     const labels = parent.querySelectorAll('.option-label');
     
+    // Disable multiple clicks
     labels.forEach(l => l.style.pointerEvents = 'none');
 
-    // Clean comparison
-    let isCorrect = selected.trim().startsWith(correct.trim()) || selected.trim() === correct.trim();
+    // Extract correct letter from AI answer (e.g., from "A" or "A. Text")
+    let correctLetter = correctStr.trim().charAt(0).toUpperCase();
 
-    if(isCorrect) {
+    if(selectedLetter === correctLetter) {
         element.classList.add('correct');
     } else {
         element.classList.add('wrong');
+        // Show correct answer in green
         labels.forEach(l => {
-            if(l.innerText.trim().startsWith(correct.trim())) l.classList.add('correct');
+            // Check if this label starts with the correct letter
+            if(l.innerText.trim().startsWith(correctLetter)) {
+                l.classList.add('correct');
+            }
         });
     }
     document.getElementById(expId).style.display = "block";
