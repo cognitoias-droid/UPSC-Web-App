@@ -1,31 +1,66 @@
 <!DOCTYPE html>
 <html>
-<head><title>Cognito Admin</title></head>
+<head>
+    <title>Admin - Content Management</title>
+    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+</head>
 <body style="font-family: Arial; padding: 20px;">
-    <h1>Admin Panel - Data Entry</h1>
+    <h1>Admin Panel - Phase 2</h1>
     
-    <div style="border: 1px solid blue; padding: 15px; margin-bottom: 20px;">
-        <h3>1. Add Main Category (e.g., UPSC, PCS)</h3>
+    <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
         <form action="/admin/add_category" method="POST">
-            <input type="text" name="cat_name" placeholder="Category Name" required>
+            <input type="text" name="cat_name" placeholder="New Category">
             <button type="submit">Add Category</button>
         </form>
     </div>
 
-    <div style="border: 1px solid green; padding: 15px;">
-        <h3>2. Add Sub-Category (e.g., History, Geography)</h3>
-        <form action="/admin/add_subcategory" method="POST">
-            <select name="parent_id" required>
-                <option value="">Select Parent Category</option>
-                {% for cat in categories %}
-                <option value="{{cat.id}}">{{cat.name}}</option>
-                {% endfor %}
-            </select>
-            <input type="text" name="sub_name" placeholder="Sub-category Name" required>
-            <button type="submit">Add Sub-category</button>
+    <div style="border: 2px solid purple; padding: 20px;">
+        <h3>Add Notes or Videos</h3>
+        <form action="/admin/add_content" method="POST">
+            <select name="sub_id" required>
+                <option value="">Select Sub-category</option>
+                {% for cat in categories %}{% for sub in cat.subcats %}
+                <option value="{{sub.id}}">{{cat.name}} -> {{sub.name}}</option>
+                {% endfor %}{% endfor %}
+            </select><br><br>
+
+            <input type="text" name="title" id="title" placeholder="Topic Title" style="width: 100%;"><br><br>
+
+            <select name="type" id="content_type" onchange="toggleType(this.value)">
+                <option value="post">Notes (Text)</option>
+                <option value="video">Video (YouTube Link)</option>
+            </select><br><br>
+
+            <div id="text_area">
+                <button type="button" onclick="askAI()" style="background: #8e44ad; color: white;">AI Assist</button>
+                <textarea name="content" id="editor"></textarea>
+            </div>
+
+            <div id="video_area" style="display:none;">
+                <input type="text" name="url" placeholder="Paste YouTube Link">
+            </div>
+            <br>
+            <button type="submit" style="background: green; color: white; padding: 10px;">Save to Database</button>
         </form>
     </div>
-    <br>
-    <a href="/">Go to Home Page to see result</a>
+
+    <script>
+        CKEDITOR.replace('editor');
+        function toggleType(val) {
+            document.getElementById('text_area').style.display = (val === 'post') ? 'block' : 'none';
+            document.getElementById('video_area').style.display = (val === 'video') ? 'block' : 'none';
+        }
+        async function askAI() {
+            let topic = document.getElementById('title').value;
+            if(!topic) { alert("Pehle title likhein!"); return; }
+            const res = await fetch('/api/ai_assist', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({topic: topic})
+            });
+            const data = await res.json();
+            CKEDITOR.instances.editor.setData(data.result);
+        }
+    </script>
 </body>
 </html>
