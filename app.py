@@ -85,9 +85,18 @@ def ai_create_test():
 def admin_panel():
     if session.get('role') != 'admin': return redirect(url_for('login'))
     if request.method == "POST":
+        # Add Subject logic
+        if 'cat_name' in request.form:
+            db.session.add(Category(name=request.form['cat_name']))
+        # Add Topic logic
+        if 'subcat_name' in request.form:
+            db.session.add(SubCategory(name=request.form['subcat_name'], category_id=request.form['parent_id']))
         # Add Student logic
         if 'new_student_id' in request.form:
             db.session.add(User(username=request.form['new_student_id'], password=generate_password_hash(request.form['new_pwd'])))
+        # Study Material logic
+        if 'post_title' in request.form:
+            db.session.add(Post(title=request.form['post_title'], content=request.form['post_content'], sub_category_id=request.form['sub_id']))
         # Manual Question logic
         if 'q_text' in request.form:
             sub_id = request.form['quiz_sub_id']
@@ -107,10 +116,26 @@ def login():
         if user and check_password_hash(user.password, request.form['password']):
             session['user_id'], session['role'], session['username'] = user.id, user.role, user.username
             return redirect(url_for('home'))
+        return "Invalid ID or Password!"
     return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route("/")
 def home(): return render_template("home.html", categories=Category.query.all())
+
+@app.route("/category/<int:cat_id>")
+def view_category(cat_id):
+    cat = Category.query.get_or_404(cat_id)
+    return render_template("category_view.html", category=cat)
+
+@app.route("/post/<int:post_id>")
+def view_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template("post_view.html", post=post)
 
 @app.route("/take_test/<int:quiz_id>")
 def take_test(quiz_id):
@@ -123,33 +148,24 @@ def create_my_admin():
         db.session.add(User(username="admin", password=generate_password_hash("cognito123"), role="admin"))
         db.session.commit()
     return "Admin ready! ID: admin, PWD: cognito123"
-    @app.route("/sync_old_students")
+
+@app.route("/sync_old_students")
 def sync_old_students():
-    # Purane database se nikala gaya data (Aapki SQL file ke mutabik)
-    # Maine top students ki list yahan di hai, baaki aap isi format mein jodd sakte hain
     old_data = [
         ('COGNITOIAS0046', 'awanish rai'),
         ('COGNITOIAS0047', 'Vishesh'),
         ('COGNITOIAS0030', 'Aman Deep'),
         ('COGNITOIAS0035', 'Sushmita'),
-        # ... isi tarah baaki IDs
     ]
-    
     count = 0
-    from werkzeug.security import generate_password_hash
-    
     for username, name in old_data:
-        # Check karein agar student pehle se toh nahi hai
         exists = User.query.filter_by(username=username).first()
         if not exists:
-            # Purana password hashed tha, isliye temporary password '123456' set kar rahe hain
-            # Bache login karke ise baad mein badal sakte hain
             hashed_pwd = generate_password_hash("123456")
             new_student = User(username=username, password=hashed_pwd, role='student')
             db.session.add(new_student)
             count += 1
-            
     db.session.commit()
-    return f"Mubarak ho! {count} purane students naye system mein successfully merge ho gaye hain. Unka temporary password '123456' hai."
+    return f"Mubarak ho! {count} purane students merge ho gaye hain. Pass: 123456"
 
 if __name__ == "__main__": app.run(debug=True)
