@@ -3,24 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cognito IAS - Admin Dashboard</title>
+    <title>Cognito IAS - Master Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://cdn.ckeditor.com/4.25.1-lts/standard/ckeditor.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; margin: 0; }
-        .sidebar { width: 250px; background: #2c3e50; height: 100vh; position: fixed; color: white; padding: 20px; }
-        .main-content { margin-left: 280px; padding: 40px; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .btn { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn:hover { background: #2980b9; }
+        :root { --sidebar-bg: #2c3e50; --primary-blue: #3498db; --success-green: #27ae60; --warning-orange: #e67e22; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; margin: 0; display: flex; }
+        
+        /* Sidebar Navigation */
+        .sidebar { width: 250px; background: var(--sidebar-bg); height: 100vh; position: fixed; color: white; padding: 20px; box-sizing: border-box; }
+        .sidebar h2 { color: var(--primary-blue); border-bottom: 1px solid #34495e; padding-bottom: 15px; }
+        .sidebar p { margin: 20px 0; font-size: 1rem; cursor: pointer; color: #bdc3c7; transition: 0.3s; }
+        .sidebar p:hover { color: white; padding-left: 10px; }
+        
+        .main-content { margin-left: 250px; padding: 40px; width: 100%; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; border-top: 5px solid var(--primary-blue); }
+        h2 { color: var(--sidebar-bg); margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #34495e; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        .btn { background: var(--primary-blue); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-orange { background: var(--warning-orange); }
+        .btn-green { background: var(--success-green); }
+        
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .stat-item { background: #3498db; color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-item { background: var(--primary-blue); color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     </style>
 </head>
 <body>
@@ -28,61 +41,49 @@
 <div class="sidebar">
     <h2>Cognito Admin</h2>
     <p><i class="fas fa-tachometer-alt"></i> Dashboard</p>
-    <p><i class="fas fa-folder-plus"></i> Categories</p>
-    <p><i class="fas fa-file-alt"></i> Posts & Notes</p>
-    <p><i class="fas fa-vial"></i> Manage Quizzes</p>
+    <p><i class="fas fa-user-plus"></i> Student Manager</p>
+    <p><i class="fas fa-file-alt"></i> Study Material</p>
+    <p><i class="fas fa-stopwatch"></i> Test Settings</p>
     <hr>
-    <a href="/" style="color: #bdc3c7; text-decoration: none;"><i class="fas fa-eye"></i> View Website</a>
+    <a href="/" style="color: #bdc3c7; text-decoration: none;"><i class="fas fa-eye"></i> View Website</a><br><br>
+    <a href="/logout" style="color: #e74c3c; text-decoration: none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
 </div>
 
 <div class="main-content">
     <h1>Dashboard Control Panel</h1>
 
     <div class="stats-grid">
-        <div class="stat-item"><h3>{{ categories|length }}</h3><p>Categories</p></div>
-        <div class="stat-item" style="background: #27ae60;"><h3>Ready</h3><p>AI Engine</p></div>
-        <div class="stat-item" style="background: #e67e22;"><h3>Live</h3><p>Student Portal</p></div>
+        <div class="stat-item"><h3>{{ categories|length }}</h3><p>Subjects</p></div>
+        <div class="stat-item" style="background: var(--success-green);"><h3>Active</h3><p>AI Engine</p></div>
+        <div class="stat-item" style="background: var(--warning-orange);"><h3>Live</h3><p>Student Portal</p></div>
     </div>
 
-    <div class="card">
-        <h2><i class="fas fa-plus-circle"></i> Nayi Category Jodein</h2>
+    <div class="card" style="border-top-color: var(--success-green);">
+        <h2><i class="fas fa-user-plus"></i> Naya Student Register Karein</h2>
         <form method="POST">
-            <div class="form-group">
-                <label>Category ka Naam</label>
-                <input type="text" name="cat_name" placeholder="History, Geography, etc." required>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Student ID (Username)</label>
+                    <input type="text" name="new_student_id" placeholder="e.g. COGNITO101" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="new_pwd" placeholder="Temporary Password" required>
+                </div>
             </div>
-            <button type="submit" class="btn">Category Banayein</button>
+            <button type="submit" class="btn btn-green">Student Account Banayein</button>
         </form>
     </div>
 
     <div class="card">
-        <h2><i class="fas fa-plus-square"></i> Nayi Sub-Category Jodein</h2>
+        <h2><i class="fas fa-edit"></i> Notes/Study Material Publish Karein</h2>
         <form method="POST">
             <div class="form-group">
-                <label>Parent Category Chunein</label>
-                <select name="parent_id" required>
-                    {% for cat in categories %}
-                    <option value="{{ cat.id }}">{{ cat.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Sub-Category ka Naam</label>
-                <input type="text" name="subcat_name" placeholder="Maurya, Gupta, etc." required>
-            </div>
-            <button type="submit" class="btn" style="background: #27ae60;">Sub-Category Banayein</button>
-        </form>
-    </div>
-
-    <div class="card" style="border-top-color: #9b59b6;">
-        <h2><i class="fas fa-edit"></i> Naye Notes Likhein (Pro Editor)</h2>
-        <form method="POST">
-            <div class="form-group">
-                <label>Post ka Title</label>
+                <label>Topic ka Title</label>
                 <input type="text" name="post_title" placeholder="e.g. Akbar ki Rajput Niti" required>
             </div>
             <div class="form-group">
-                <label>Kahan Publish Karein?</label>
+                <label>Kahan Publish Karein? (Sub-Category)</label>
                 <select name="sub_id" required>
                     {% for sub in subcategories %}
                     <option value="{{ sub.id }}">{{ sub.parent_category.name }} -> {{ sub.name }}</option>
@@ -93,38 +94,66 @@
                 <label>Content (Editor use karein)</label>
                 <textarea name="post_content" id="editor1" rows="15"></textarea>
             </div>
-            <button type="submit" class="btn" style="background: #9b59b6;">Publish Note</button>
+            <button type="submit" class="btn">Publish Note</button>
+        </form>
+    </div>
+
+    <div class="card" style="border-top-color: var(--warning-orange);">
+        <h2><i class="fas fa-vial"></i> Quiz/Test Configuration</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label>Test Topic</label>
+                <input type="text" name="quiz_topic" placeholder="e.g. Ancient History Full Test" required>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Total Questions</label>
+                    <input type="number" name="num_q" value="5">
+                </div>
+                <div class="form-group">
+                    <label>Time Limit (Minutes)</label>
+                    <input type="number" name="t_limit" value="10">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Negative Marking (per wrong answer)</label>
+                <input type="number" step="0.01" name="n_marking" value="0.33">
+            </div>
+            <button type="submit" class="btn btn-orange">Save Test Settings</button>
         </form>
     </div>
 
     <div class="card">
-        <h2><i class="fas fa-list"></i> Aapka Current Structure</h2>
-        <ul>
-            {% for cat in categories %}
-            <li><b>{{ cat.name }}</b>
-                <ul>
-                    {% for sub in cat.subcategories %}
-                    <li>{{ sub.name }} (Posts: {{ sub.posts|length }})</li>
+        <h2><i class="fas fa-folder-plus"></i> Nayi Category & Sub-Category</h2>
+        <div class="grid-2">
+            <form method="POST">
+                <label>Subject (Category)</label>
+                <input type="text" name="cat_name" placeholder="History, Geography..." required>
+                <button type="submit" class="btn btn-green" style="margin-top:10px;">Add Subject</button>
+            </form>
+            <form method="POST">
+                <label>Topic (Sub-Category)</label>
+                <select name="parent_id">
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
                     {% endfor %}
-                </ul>
-            </li>
-            {% endfor %}
-        </ul>
+                </select>
+                <input type="text" name="subcat_name" placeholder="Maurya, Gupta..." required style="margin-top:10px;">
+                <button type="submit" class="btn btn-green" style="margin-top:10px;">Add Topic</button>
+            </form>
+        </div>
     </div>
 </div>
 
 <script>
-    // Ye check karega ki script load hui hai ya nahi
+    // Stable Editor Initialization
     window.onload = function() {
         if (typeof CKEDITOR !== 'undefined') {
             CKEDITOR.replace('editor1', {
                 height: 400,
-                // Basic configuration for UPSC notes
-                removePlugins: 'easyimage, cloudservices',
-                extraPlugins: 'image2, table, tabletools'
+                extraPlugins: 'table,tabletools,image2',
+                removePlugins: 'easyimage,cloudservices'
             });
-        } else {
-            console.error("CKEditor load nahi ho paya!");
         }
     };
 </script>
