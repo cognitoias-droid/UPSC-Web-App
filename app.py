@@ -112,5 +112,52 @@ def ai_call():
         response = ai_model.generate_content(prompt)
         return jsonify({"result": response.text})
     return jsonify({"result": "AI Connection Error"})
+    
+@app.route("/migrate_complete")
+def migrate_complete():
+    # 1. Database Reset aur Admin Creation
+    db.create_all()
+    if not User.query.filter_by(username="admin").first():
+        db.session.add(User(username="admin", password=generate_password_hash("cognito123"), role="admin"))
 
+    # 2. Students Migration (Based on your provided list)
+    students_list = [
+        ('COGNITOIAS0001', 'Manas Rai', 'manas@gmail.com'),
+        ('COGNITOIAS0046', 'Awanish Rai', 'awanish@gmail.com'),
+        ('COGNITOIAS0047', 'Vishesh', 'vishesh@gmail.com'),
+        ('COGNITOIAS0002', 'Rupnam Rai', 'rupnam@gmail.com'),
+        ('COGNITOIAS0004', 'Anshu Tiwari', 'anshu@gmail.com')
+    ]
+    for uid, name, email in students_list:
+        if not User.query.filter_by(username=uid).first():
+            db.session.add(User(username=uid, password=generate_password_hash("123456"), role="student"))
+
+    # 3. Purane Categories aur Tests Migrate Karna
+    # Example: Modern History Category aur uske Questions
+    if not Category.query.filter_by(name="History").first():
+        hist_cat = Category(name="History")
+        db.session.add(hist_cat)
+        db.session.flush() # ID generate karne ke liye
+
+        # Purana Test: Books and Author (Modern History)
+        test1 = Quiz(topic="Books and Author (Modern History)", 
+                     description="Complete Test on Modern History Authors",
+                     category_id=hist_cat.id, time_limit=90, neg_marking=0.33)
+        db.session.add(test1)
+        db.session.flush()
+
+        # Purane Questions (Sample from your Screenshot)
+        q1 = Question(quiz_id=test1.id, 
+                      text="Which one of the following pairs is correctly matched?",
+                      opt_a="Abul Kalam Azad – Hind Swaraj",
+                      opt_b="Annie Besant – New India",
+                      opt_c="Bal Gangadhar Tilak – Common Weal",
+                      opt_d="Mahatma Gandhi – India Wins Freedom",
+                      correct="B", 
+                      explanation="Annie Besant started New India. Hind Swaraj was by Gandhi, and India Wins Freedom by Azad.")
+        db.session.add(q1)
+
+    db.session.commit()
+    return "Mubarak ho! Students, Categories, aur Purane Tests migrate ho gaye hain. Ab Admin Panel aur Student Dashboard check karein."
+    
 if __name__ == "__main__": app.run(debug=True)
