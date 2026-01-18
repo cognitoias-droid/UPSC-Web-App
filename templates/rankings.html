@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rank List - Cognito IAS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary: #2c3e50; --gold: #f1c40f; --silver: #bdc3c7; --bronze: #cd7f32; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
+        .rank-card { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: var(--primary); border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: var(--primary); }
+        
+        .rank-1 { color: var(--gold); font-weight: bold; }
+        .rank-2 { color: var(--silver); font-weight: bold; }
+        .rank-3 { color: var(--bronze); font-weight: bold; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; background: #e1f5fe; color: #0288d1; }
+    </style>
+</head>
+<body>
+
+<div class="rank-card">
+    <h1><i class="fas fa-trophy"></i> Test Rank List</h1>
+    <p style="text-align: center; color: #666;">Test Topic: <b>{{ quiz.topic }}</b></p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Student ID</th>
+                <th>Score</th>
+                <th>Time Spent</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for res in results %}
+            <tr class="rank-{{ loop.index }}">
+                <td>
+                    {% if loop.index == 1 %} 🥇 {% elif loop.index == 2 %} 🥈 {% elif loop.index == 3 %} 🥉 
+                    {% else %} {{ loop.index }} {% endif %}
+                </td>
+                <td>{{ res.student.username }}</td>
+                <td><b>{{ res.score }}</b></td>
+                <td><span class="badge">{{ res.timestamp.strftime('%d %b, %H:%M') }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="/" style="text-decoration: none; color: #3498db; font-weight: bold;">← Back to Dashboard</a>
+    </div>
+</div>
+
+</body>
+</html>
