@@ -2,68 +2,79 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <title>Cognito IAS - Admin Control Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognito IAS - Admin Dashboard</title>
     <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --sidebar-bg: #2c3e50; --main-bg: #f4f7f6; --accent: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; display: flex; margin: 0; background: var(--main-bg); }
         .sidebar { width: 250px; background: var(--sidebar-bg); color: white; height: 100vh; position: fixed; padding: 20px; }
-        .sidebar a { color: #bdc3c7; text-decoration: none; display: block; padding: 12px; border-radius: 5px; margin-bottom: 5px; transition: 0.3s; }
+        .sidebar h2 { text-align: center; color: white; margin-bottom: 30px; }
+        .sidebar a { color: #bdc3c7; text-decoration: none; display: block; padding: 12px; border-radius: 5px; margin-bottom: 10px; transition: 0.3s; }
         .sidebar a:hover { background: #34495e; color: white; }
         .content { margin-left: 270px; padding: 30px; width: calc(100% - 310px); }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 4px solid var(--accent); }
         .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
-        .btn-ai { background: #8e44ad; } .btn-save { background: #27ae60; width: 100%; margin-top: 15px; }
+        .btn-ai { background: #8e44ad; } 
+        .btn-save { background: #27ae60; width: 100%; margin-top: 10px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        label { font-weight: bold; color: #34495e; }
         #status-msg { color: #8e44ad; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2 style="text-align:center;">Cognito IAS</h2>
-    <hr>
+    <h2>Cognito IAS</h2>
     <nav>
-        <a href="#categories"><i class="fas fa-layer-group"></i> Category & Sub</a>
-        <a href="#questions"><i class="fas fa-question-circle"></i> Add Question</a>
-        <a href="#posts"><i class="fas fa-file-alt"></i> Posts & Notes</a>
+        <a href="#category-section"><i class="fas fa-layer-group"></i> Category Management</a>
+        <a href="#question-section"><i class="fas fa-question-circle"></i> Add Question</a>
+        <a href="#post-section"><i class="fas fa-file-alt"></i> Create Post/Notes</a>
+        <a href="/logout" style="margin-top: 50px; color: #e74c3c;"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </nav>
-    <div style="position: absolute; bottom: 20px; width: 210px;">
-        <a href="/logout" style="color:#e74c3c;"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </div>
 </div>
 
 <div class="content">
-    <h1>Admin Control Dashboard</h1>
+    <h1>Master Admin Dashboard</h1>
     <div id="status-msg"></div>
 
-    <div id="categories" class="card">
-        <h3><i class="fas fa-folder-plus"></i> Category Management</h3>
-        <form action="/admin/add_category" method="POST">
-            <div class="grid-2">
-                <input type="text" name="cat_name" placeholder="New Category (e.g. UPSC)" required>
-                <button type="submit" class="btn btn-save" style="margin-top:8px;">Add Category</button>
-            </div>
-        </form>
+    <div id="category-section" class="card">
+        <h3><i class="fas fa-folder-plus"></i> Category & Sub-category</h3>
+        <div class="grid-2">
+            <form action="/admin/add_category" method="POST">
+                <label>New Category</label>
+                <input type="text" name="cat_name" placeholder="e.g., UPSC" required>
+                <button type="submit" class="btn btn-save">Save Category</button>
+            </form>
+            <form action="/admin/add_subcategory" method="POST">
+                <label>Select Parent Category</label>
+                <select name="parent_id" required>
+                    <option value="">-- Select --</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="subcat_name" placeholder="e.g., Modern History" required>
+                <button type="submit" class="btn btn-save" style="background:#34495e;">Save Sub-category</button>
+            </form>
+        </div>
     </div>
 
-    <div id="questions" class="card" style="border-top-color: #27ae60;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3><i class="fas fa-language"></i> Add Question (Bilingual)</h3>
+    <div id="question-section" class="card" style="border-top-color: #27ae60;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3><i class="fas fa-language"></i> Add Question (English & Hindi)</h3>
             <button onclick="aiAssist('quiz')" class="btn btn-ai"><i class="fas fa-robot"></i> AI Generate MCQ</button>
         </div>
         
         <form action="/admin/save_question" method="POST">
-            <select name="test_id" required>
-                <option value="">Select Test/Quiz</option>
-                {% for t in tests %}<option value="{{t.id}}">{{t.title}}</option>{% endfor %}
-            </select>
+            <label>Select Quiz/Test ID</label>
+            <input type="number" name="test_id" placeholder="Test ID (e.g. 1)" required>
 
             <div class="grid-2">
-                <div><label>English Question</label><textarea name="q_en" id="q_en" rows="3"></textarea></div>
-                <div><label>Hindi Question (हिंदी)</label><textarea name="q_hi" id="q_hi" rows="3"></textarea></div>
+                <div><label>English Question</label><textarea name="q_en" id="q_en" rows="4"></textarea></div>
+                <div><label>Hindi Question (हिंदी)</label><textarea name="q_hi" id="q_hi" rows="4"></textarea></div>
             </div>
 
             <div class="grid-2">
@@ -75,36 +86,36 @@
 
             <div class="grid-2">
                 <select name="ans" id="ans">
-                    <option value="A">Answer: A</option><option value="B">B</option>
-                    <option value="C">C</option><option value="D">D</option>
+                    <option value="A">Correct Answer: A</option>
+                    <option value="B">Correct Answer: B</option>
+                    <option value="C">Correct Answer: C</option>
+                    <option value="D">Correct Answer: D</option>
                 </select>
-                <input type="text" name="exp" id="exp" placeholder="Explanation">
+                <input type="text" name="exp" id="exp" placeholder="Explanation (Detailed)">
             </div>
-            <button type="submit" class="btn btn-save">Save Question</button>
+            <button type="submit" class="btn btn-save">Save Question to Database</button>
         </form>
     </div>
 
-    <div id="posts" class="card" style="border-top-color: #8e44ad;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3><i class="fas fa-pen-nib"></i> AI Post Generator</h3>
-            <button onclick="aiAssist('post')" class="btn btn-ai">Generate Full Notes</button>
+    <div id="post-section" class="card" style="border-top-color: #8e44ad;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3><i class="fas fa-pen-nib"></i> Create Post/Notes with AI</h3>
+            <button onclick="aiAssist('post')" class="btn btn-ai">AI Assist</button>
         </div>
-        <input type="text" id="post_topic" placeholder="Topic name for notes...">
+        <input type="text" id="post_topic" placeholder="Enter topic for AI notes...">
         <textarea id="post_editor"></textarea>
     </div>
 </div>
-
-
 
 <script>
     CKEDITOR.replace('post_editor');
 
     async function aiAssist(type) {
-        let topic = (type === 'post') ? document.getElementById('post_topic').value : prompt("Enter Topic for UPSC MCQ:");
+        let topic = (type === 'post') ? document.getElementById('post_topic').value : prompt("MCQ ka topic likhein:");
         if(!topic) return;
 
         const status = document.getElementById('status-msg');
-        status.innerText = "⏳ AI is thinking... Please wait.";
+        status.innerText = "⏳ AI dimaag laga raha hai... Kripya intezar karein.";
 
         try {
             const response = await fetch('/api/ai_assist', {
@@ -118,7 +129,7 @@
             if(type === 'post') {
                 CKEDITOR.instances.post_editor.setData(data.result);
             } else {
-                // Auto-fill form fields
+                // Backend se aaye JSON ko dabbo mein bharna
                 document.getElementById('q_en').value = data.q_en;
                 document.getElementById('q_hi').value = data.q_hi;
                 document.getElementById('oa').value = data.oa;
@@ -128,9 +139,9 @@
                 document.getElementById('ans').value = data.ans;
                 document.getElementById('exp').value = data.exp;
             }
-            status.innerText = "✅ AI Data Filled Successfully!";
+            status.innerText = "✅ AI ne data bhar diya hai!";
         } catch (e) {
-            status.innerText = "❌ AI Error: Please try again.";
+            status.innerText = "❌ AI Error: API Key ya Connection check karein.";
             console.error(e);
         }
     }
