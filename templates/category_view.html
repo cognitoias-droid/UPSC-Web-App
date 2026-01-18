@@ -7,28 +7,55 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
+        .container { max-width: 900px; margin: auto; }
         h1 { color: #2c3e50; text-align: center; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
-        .sub-cat-section { background: white; margin: 20px 0; padding: 20px; border-radius: 10px; shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h2 { color: #e67e22; font-size: 1.2rem; }
-        .post-link { display: block; padding: 10px; color: #34495e; text-decoration: none; border-left: 3px solid #3498db; margin: 5px 0; background: #f9f9f9; transition: 0.3s; }
-        .post-link:hover { background: #3498db; color: white; padding-left: 20px; }
-        .back-btn { display: inline-block; margin-bottom: 20px; color: #3498db; text-decoration: none; font-weight: bold; }
+        .sub-cat-section { background: white; margin: 20px 0; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        h2 { color: #2c3e50; border-left: 5px solid #e67e22; padding-left: 15px; margin-bottom: 20px; }
+        
+        .grid-section { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .action-card { padding: 15px; border-radius: 8px; text-decoration: none; color: white; text-align: center; font-weight: bold; transition: 0.3s; }
+        .bg-blue { background: #3498db; } .bg-green { background: #27ae60; } .bg-red { background: #e74c3c; }
+        .action-card:hover { opacity: 0.8; transform: translateY(-3px); }
+
+        .video-box { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px solid #eee; }
+        .video-link { color: #c0392b; text-decoration: none; font-size: 0.9rem; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> Home par wapas jayein</a>
+        <a href="/" style="text-decoration: none; color: #3498db;"><i class="fas fa-arrow-left"></i> Home</a>
         <h1>{{ category.name }}</h1>
 
         {% for sub in category.subcategories %}
         <div class="sub-cat-section">
-            <h2><i class="fas fa-book-open"></i> {{ sub.name }}</h2>
-            <div class="post-list">
-                {% for post in sub.posts %}
-                <a href="/post/{{ post.id }}" class="post-link">{{ post.title }}</a>
+            <h2>{{ sub.name }}</h2>
+            
+            <div class="grid-section">
+                <div>
+                    <h4 style="margin: 0 0 10px 0;"><i class="fas fa-file-alt"></i> Study Material</h4>
+                    {% for post in sub.posts %}
+                    <a href="/post/{{ post.id }}" class="action-card bg-blue" style="display:block; margin-bottom:5px;">{{ post.title }}</a>
+                    {% endfor %}
+                </div>
+
+                <div>
+                    <h4 style="margin: 0 0 10px 0;"><i class="fas fa-stopwatch"></i> Topic Tests</h4>
+                    {% for quiz in sub.quizzes %}
+                    <a href="/take_test/{{ quiz.id }}" class="action-card bg-green" style="display:block; margin-bottom:5px;">Attempt Test</a>
+                    <a href="/rankings/{{ quiz.id }}" style="font-size: 0.8rem; color: #7f8c8d; display:block; text-align:center;">View Rank List</a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;"><i class="fas fa-video"></i> Video Classes</h4>
+                {% for video in sub.videos %}
+                <div class="video-box">
+                    <i class="fab fa-youtube" style="color:red;"></i> 
+                    <a href="{{ video.url }}" target="_blank" class="video-link">{{ video.title }}</a>
+                </div>
                 {% else %}
-                <p style="color: #95a5a6; font-style: italic;">Is section mein abhi koi notes nahi hain.</p>
+                <p style="color: #999; font-size: 0.8rem;">Is topic par abhi koi video nahi hai.</p>
                 {% endfor %}
             </div>
         </div>
