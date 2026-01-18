@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.secret_key = "cognito_ias_v2_fixed"
+app.secret_key = "cognito_ias_v2_final"
 
 # Database Configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +19,7 @@ if api_key:
     genai.configure(api_key=api_key)
     ai_model = genai.GenerativeModel('gemini-pro')
 
-# Models
+# Models (Kadi: Category -> Subcat -> Post/Video)
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True)
@@ -48,15 +48,17 @@ class Video(db.Model):
 @app.route("/system_init")
 def system_init():
     db.create_all()
-    return "SUCCESS: Phase 2 Ready!"
+    return "SUCCESS: Phase 2 Ready! Buniyaad taiyar hai."
 
 @app.route("/")
 def home():
-    return render_template("home.html", categories=Category.query.all())
+    all_categories = Category.query.all()
+    return render_template("home.html", categories=all_categories)
 
 @app.route("/admin")
 def admin_dashboard():
-    return render_template("admin.html", categories=Category.query.all())
+    all_categories = Category.query.all()
+    return render_template("admin.html", categories=all_categories)
 
 @app.route("/admin/add_category", methods=["POST"])
 def add_category():
@@ -68,6 +70,7 @@ def add_category():
 
 @app.route("/admin/add_subcategory", methods=["POST"])
 def add_subcategory():
+    # Fix: Syntax Error sudhara gaya (Line 68)
     name = request.form.get("sub_name")
     pid = request.form.get("parent_id")
     if name and pid:
@@ -88,9 +91,9 @@ def add_content():
 @app.route("/api/ai_assist", methods=["POST"])
 def ai_assist():
     if not ai_model:
-        return jsonify({"error": "AI not configured"}), 500
+        return jsonify({"error": "AI Config Missing"}), 500
     topic = request.json.get("topic")
-    prompt = f"Write detailed UPSC study notes on {topic}. Use HTML tags. Bilingual Hindi/English."
+    prompt = f"Write UPSC study notes on {topic}. Use HTML tags like <h3> and <ul>. Bilingual Hindi/English."
     response = ai_model.generate_content(prompt)
     return jsonify({"result": response.text})
 
