@@ -1,95 +1,87 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-    <meta charset="UTF-8"><title>Master Admin</title>
+    <title>Cognito Master Admin</title>
+    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.ckeditor.com/4.19.1/standard/ckeditor.js"></script>
     <style>
-        body { font-family: sans-serif; display: flex; margin: 0; background: #f4f7f6; }
-        .sidebar { width: 250px; background: #2c3e50; color: white; height: 100vh; position: fixed; padding: 20px; }
-        .main { margin-left: 270px; padding: 30px; width: 100%; }
-        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-top: 4px solid #3498db; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; }
-        .btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; color: white; font-weight: bold; }
-        .btn-blue { background: #3498db; } .btn-green { background: #27ae60; } .btn-orange { background: #e67e22; }
+        body { font-family: sans-serif; display: flex; margin: 0; background: #f8f9fa; }
+        .sidebar { width: 260px; background: #2c3e50; color: white; height: 100vh; position: fixed; padding: 20px; }
+        .content { margin-left: 280px; padding: 30px; width: calc(100% - 300px); }
+        .card { background: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
+        .bg-blue { background: #3498db; } .bg-green { background: #27ae60; } .bg-orange { background: #e67e22; }
     </style>
 </head>
 <body>
 <div class="sidebar">
-    <h2>Cognito Admin</h2>
-    <a href="#structure" style="color:white;display:block;margin:10px 0;">Structure</a>
-    <a href="#material" style="color:white;display:block;margin:10px 0;">Material & AI</a>
-    <a href="#quiz" style="color:white;display:block;margin:10px 0;">Quiz Builder</a>
-    <a href="#video" style="color:white;display:block;margin:10px 0;">Video Lectures</a>
+    <h2><i class="fas fa-university"></i> Cognito Admin</h2>
+    <hr>
+    <a href="#cat" style="color:white;display:block;margin:15px 0;text-decoration:none;">Category Manager</a>
+    <a href="#exam" style="color:white;display:block;margin:15px 0;text-decoration:none;">Exam Builder</a>
+    <a href="#video" style="color:white;display:block;margin:15px 0;text-decoration:none;">Video Lectures</a>
 </div>
 
-<div class="main">
-    <h1>Final Control Panel</h1>
+<div class="content">
+    <h1><i class="fas fa-tools"></i> Control Panel</h1>
 
-    <div id="structure" class="card">
-        <h3>1. Subject & Topic Manager</h3>
-        <form method="POST"><input type="text" name="cat_name" placeholder="New Subject"><button class="btn btn-green">Add Subject</button></form>
+    <div class="card" style="border-left: 5px solid #8e44ad;">
+        <h3><i class="fas fa-robot"></i> AI Study Tool</h3>
+        <input type="text" id="ai_prompt" placeholder="Write a topic for AI to generate notes or questions..." style="width:70%; padding:10px;">
+        <button onclick="generateAI()" class="btn bg-orange">Generate with AI</button>
+        <div id="ai_out" style="margin-top:15px; padding:10px; background:#f0f7ff; display:none;"></div>
+    </div>
+
+    <div id="exam" class="card">
+        <h3>Step 1: Create New Exam Series</h3>
         <form method="POST">
-            <select name="parent_id">{% for c in categories %}<option value="{{c.id}}">{{c.name}}</option>{% endfor %}</select>
-            <input type="text" name="subcat_name" placeholder="New Topic"><button class="btn btn-green">Add Topic</button>
+            <input type="text" name="quiz_topic" placeholder="Series Name (e.g. Modern History)" required style="width:100%; margin-bottom:10px;">
+            <select name="cat_id" style="width:100%; margin-bottom:10px;">
+                {% for c in categories %}<option value="{{c.id}}">{{c.name}}</option>{% endfor %}
+            </select>
+            <textarea name="quiz_desc" placeholder="Exam Description"></textarea>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <input type="number" name="time" placeholder="Time (Min)" value="60">
+                <input type="number" step="0.01" name="neg" placeholder="Neg Marking" value="0.33">
+            </div>
+            <button type="submit" class="btn bg-blue" style="margin-top:15px;">Create Series</button>
         </form>
     </div>
 
-    <div id="material" class="card">
-        <h3>2. AI Notes Generator</h3>
-        <input type="text" id="ai_topic" placeholder="Enter Topic Name">
-        <button onclick="askAI()" class="btn btn-orange">AI se Likhein</button>
+    <div class="card">
+        <h3>Step 2: Add Manual Questions with Editor</h3>
         <form method="POST">
-            <input type="text" name="post_title" id="p_title" placeholder="Title">
-            <select name="p_sub_id">{% for s in subcategories %}<option value="{{s.id}}">{{s.name}}</option>{% endfor %}</select>
-            <textarea name="post_content" id="editor_post"></textarea>
-            <button class="btn btn-blue">Publish Post</button>
-        </form>
-    </div>
-
-    <div id="quiz" class="card">
-        <h3>3. Professional Quiz Builder</h3>
-        <form method="POST">
-            <input type="text" name="quiz_topic" placeholder="Quiz Topic Name">
-            <textarea name="quiz_desc" placeholder="Instructions..."></textarea>
-            <select name="sub_id">{% for s in subcategories %}<option value="{{s.id}}">{{s.name}}</option>{% endfor %}</select>
-            <div style="display:flex;gap:10px;"><input type="number" name="time" placeholder="Time (Min)"><input type="number" step="0.01" name="neg" placeholder="Neg Marking"></div>
-            <button class="btn btn-blue">Step 1: Create Quiz Header</button>
-        </form>
-        <hr>
-        <h4>Add Questions with Editor</h4>
-        <form method="POST">
-            <select name="target_quiz">{% for q in quizzes %}<option value="{{q.id}}">{{q.topic}}</option>{% endfor %}</select>
-            <textarea name="q_text" id="editor_q"></textarea>
-            <input type="text" name="oa" placeholder="Option A"><input type="text" name="ob" placeholder="Option B">
-            <input type="text" name="oc" placeholder="Option C"><input type="text" name="od" placeholder="Option D">
-            <textarea name="exp" id="editor_exp"></textarea>
+            <select name="quiz_id" style="width:100%; margin-bottom:10px;">
+                {% for q in quizzes %}<option value="{{q.id}}">{{q.topic}}</option>{% endfor %}
+            </select>
+            <label>Question (Editor Supported)</label>
+            <textarea name="q_text" id="q_edit"></textarea>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                <input type="text" name="oa" placeholder="Option A">
+                <input type="text" name="ob" placeholder="Option B">
+                <input type="text" name="oc" placeholder="Option C">
+                <input type="text" name="od" placeholder="Option D">
+            </div>
+            
+            <label style="display:block; margin-top:10px;">Correct Answer & Explanation</label>
             <select name="ans"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>
-            <button class="btn btn-orange">Step 2: Save Question</button>
-        </form>
-    </div>
-
-    <div id="video" class="card">
-        <h3>4. Video Lecture Manager</h3>
-        <form method="POST">
-            <input type="text" name="video_title" placeholder="Video Title">
-            <input type="text" name="video_url" placeholder="YouTube URL">
-            <select name="v_sub_id">{% for s in subcategories %}<option value="{{s.id}}">{{s.name}}</option>{% endfor %}</select>
-            <button class="btn btn-blue">Add Video</button>
+            <textarea name="exp" id="exp_edit" placeholder="Explanation..."></textarea>
+            <button type="submit" class="btn bg-green" style="margin-top:15px;">Save Question</button>
         </form>
     </div>
 </div>
 
 <script>
-    CKEDITOR.replace('editor_post');
-    CKEDITOR.replace('editor_q');
-    CKEDITOR.replace('editor_exp');
+    CKEDITOR.replace('q_edit');
+    CKEDITOR.replace('exp_edit');
 
-    async function askAI() {
-        let topic = document.getElementById('ai_topic').value;
-        const res = await fetch('/ai_action', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt: "Write UPSC notes on " + topic + " with HTML tags"})});
+    async function generateAI() {
+        let p = document.getElementById('ai_prompt').value;
+        const res = await fetch('/ai_call', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt:p})});
         const data = await res.json();
-        CKEDITOR.instances.editor_post.setData(data.result);
+        document.getElementById('ai_out').style.display = 'block';
+        document.getElementById('ai_out').innerHTML = "<b>AI Response:</b><br>" + data.result;
     }
 </script>
 </body>
