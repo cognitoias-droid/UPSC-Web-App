@@ -156,19 +156,23 @@ function checkAnswer(element, selectedLetter, correctStr, expId) {
     const parent = element.parentElement;
     const labels = parent.querySelectorAll('.option-label');
     
-    // Disable multiple clicks
+    // 1. Sabhi options ko lock karein
     labels.forEach(l => l.style.pointerEvents = 'none');
 
-    // Extract correct letter from AI answer (e.g., from "A" or "A. Text")
-    let correctLetter = correctStr.trim().charAt(0).toUpperCase();
+    // 2. SMART CLEANING: AI kabhi "A" bhejta hai, kabhi "A." aur kabhi "Correct Answer: A"
+    // Hum sirf pehla alphabetic character (A, B, C, D) nikalenge
+    let correctLetter = correctStr.match(/[A-D]/i)[0].toUpperCase();
+    let selected = selectedLetter.toUpperCase();
 
-    if(selectedLetter === correctLetter) {
-        element.classList.add('correct');
+    console.log("Selected:", selected, "Correct:", correctLetter); // Debugging ke liye
+
+    if(selected === correctLetter) {
+        element.classList.add('correct'); // Ab ye GREEN hoga
     } else {
-        element.classList.add('wrong');
-        // Show correct answer in green
+        element.classList.add('wrong'); // Red
+        // Sahi wale ko Green karke dikhayein
         labels.forEach(l => {
-            // Check if this label starts with the correct letter
+            // Label ke andar ka text check karein
             if(l.innerText.trim().startsWith(correctLetter)) {
                 l.classList.add('correct');
             }
