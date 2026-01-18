@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ category.name }} - Cognito IAS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        .sub-cat-section { background: white; margin: 20px 0; padding: 20px; border-radius: 10px; shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { color: #e67e22; font-size: 1.2rem; }
+        .post-link { display: block; padding: 10px; color: #34495e; text-decoration: none; border-left: 3px solid #3498db; margin: 5px 0; background: #f9f9f9; transition: 0.3s; }
+        .post-link:hover { background: #3498db; color: white; padding-left: 20px; }
+        .back-btn { display: inline-block; margin-bottom: 20px; color: #3498db; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> Home par wapas jayein</a>
+        <h1>{{ category.name }}</h1>
+
+        {% for sub in category.subcategories %}
+        <div class="sub-cat-section">
+            <h2><i class="fas fa-book-open"></i> {{ sub.name }}</h2>
+            <div class="post-list">
+                {% for post in sub.posts %}
+                <a href="/post/{{ post.id }}" class="post-link">{{ post.title }}</a>
+                {% else %}
+                <p style="color: #95a5a6; font-style: italic;">Is section mein abhi koi notes nahi hain.</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
