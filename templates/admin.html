@@ -1,150 +1,31 @@
 <!DOCTYPE html>
-<html lang="hi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cognito IAS - Admin Dashboard</title>
-    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --sidebar-bg: #2c3e50; --main-bg: #f4f7f6; --accent: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; display: flex; margin: 0; background: var(--main-bg); }
-        .sidebar { width: 250px; background: var(--sidebar-bg); color: white; height: 100vh; position: fixed; padding: 20px; }
-        .sidebar h2 { text-align: center; color: white; margin-bottom: 30px; }
-        .sidebar a { color: #bdc3c7; text-decoration: none; display: block; padding: 12px; border-radius: 5px; margin-bottom: 10px; transition: 0.3s; }
-        .sidebar a:hover { background: #34495e; color: white; }
-        .content { margin-left: 270px; padding: 30px; width: calc(100% - 310px); }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 4px solid var(--accent); }
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
-        .btn-ai { background: #8e44ad; } 
-        .btn-save { background: #27ae60; width: 100%; margin-top: 10px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        label { font-weight: bold; color: #34495e; }
-        #status-msg { color: #8e44ad; font-weight: bold; margin-bottom: 10px; }
-    </style>
-</head>
-<body>
-
-<div class="sidebar">
-    <h2>Cognito IAS</h2>
-    <nav>
-        <a href="#category-section"><i class="fas fa-layer-group"></i> Category Management</a>
-        <a href="#question-section"><i class="fas fa-question-circle"></i> Add Question</a>
-        <a href="#post-section"><i class="fas fa-file-alt"></i> Create Post/Notes</a>
-        <a href="/logout" style="margin-top: 50px; color: #e74c3c;"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </nav>
-</div>
-
-<div class="content">
-    <h1>Master Admin Dashboard</h1>
-    <div id="status-msg"></div>
-
-    <div id="category-section" class="card">
-        <h3><i class="fas fa-folder-plus"></i> Category & Sub-category</h3>
-        <div class="grid-2">
-            <form action="/admin/add_category" method="POST">
-                <label>New Category</label>
-                <input type="text" name="cat_name" placeholder="e.g., UPSC" required>
-                <button type="submit" class="btn btn-save">Save Category</button>
-            </form>
-            <form action="/admin/add_subcategory" method="POST">
-                <label>Select Parent Category</label>
-                <select name="parent_id" required>
-                    <option value="">-- Select --</option>
-                    {% for cat in categories %}
-                    <option value="{{ cat.id }}">{{ cat.name }}</option>
-                    {% endfor %}
-                </select>
-                <input type="text" name="subcat_name" placeholder="e.g., Modern History" required>
-                <button type="submit" class="btn btn-save" style="background:#34495e;">Save Sub-category</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="question-section" class="card" style="border-top-color: #27ae60;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3><i class="fas fa-language"></i> Add Question (English & Hindi)</h3>
-            <button onclick="aiAssist('quiz')" class="btn btn-ai"><i class="fas fa-robot"></i> AI Generate MCQ</button>
-        </div>
-        
-        <form action="/admin/save_question" method="POST">
-            <label>Select Quiz/Test ID</label>
-            <input type="number" name="test_id" placeholder="Test ID (e.g. 1)" required>
-
-            <div class="grid-2">
-                <div><label>English Question</label><textarea name="q_en" id="q_en" rows="4"></textarea></div>
-                <div><label>Hindi Question (हिंदी)</label><textarea name="q_hi" id="q_hi" rows="4"></textarea></div>
-            </div>
-
-            <div class="grid-2">
-                <input type="text" name="oa" id="oa" placeholder="Option A">
-                <input type="text" name="ob" id="ob" placeholder="Option B">
-                <input type="text" name="oc" id="oc" placeholder="Option C">
-                <input type="text" name="od" id="od" placeholder="Option D">
-            </div>
-
-            <div class="grid-2">
-                <select name="ans" id="ans">
-                    <option value="A">Correct Answer: A</option>
-                    <option value="B">Correct Answer: B</option>
-                    <option value="C">Correct Answer: C</option>
-                    <option value="D">Correct Answer: D</option>
-                </select>
-                <input type="text" name="exp" id="exp" placeholder="Explanation (Detailed)">
-            </div>
-            <button type="submit" class="btn btn-save">Save Question to Database</button>
+<html>
+<head><title>Cognito Admin</title></head>
+<body style="font-family: Arial; padding: 20px;">
+    <h1>Admin Panel - Data Entry</h1>
+    
+    <div style="border: 1px solid blue; padding: 15px; margin-bottom: 20px;">
+        <h3>1. Add Main Category (e.g., UPSC, PCS)</h3>
+        <form action="/admin/add_category" method="POST">
+            <input type="text" name="cat_name" placeholder="Category Name" required>
+            <button type="submit">Add Category</button>
         </form>
     </div>
 
-    <div id="post-section" class="card" style="border-top-color: #8e44ad;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3><i class="fas fa-pen-nib"></i> Create Post/Notes with AI</h3>
-            <button onclick="aiAssist('post')" class="btn btn-ai">AI Assist</button>
-        </div>
-        <input type="text" id="post_topic" placeholder="Enter topic for AI notes...">
-        <textarea id="post_editor"></textarea>
+    <div style="border: 1px solid green; padding: 15px;">
+        <h3>2. Add Sub-Category (e.g., History, Geography)</h3>
+        <form action="/admin/add_subcategory" method="POST">
+            <select name="parent_id" required>
+                <option value="">Select Parent Category</option>
+                {% for cat in categories %}
+                <option value="{{cat.id}}">{{cat.name}}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="sub_name" placeholder="Sub-category Name" required>
+            <button type="submit">Add Sub-category</button>
+        </form>
     </div>
-</div>
-
-<script>
-    CKEDITOR.replace('post_editor');
-
-    async function aiAssist(type) {
-        let topic = (type === 'post') ? document.getElementById('post_topic').value : prompt("MCQ ka topic likhein:");
-        if(!topic) return;
-
-        const status = document.getElementById('status-msg');
-        status.innerText = "⏳ AI dimaag laga raha hai... Kripya intezar karein.";
-
-        try {
-            const response = await fetch('/api/ai_assist', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({topic: topic, type: type})
-            });
-            
-            const data = await response.json();
-            
-            if(type === 'post') {
-                CKEDITOR.instances.post_editor.setData(data.result);
-            } else {
-                // Backend se aaye JSON ko dabbo mein bharna
-                document.getElementById('q_en').value = data.q_en;
-                document.getElementById('q_hi').value = data.q_hi;
-                document.getElementById('oa').value = data.oa;
-                document.getElementById('ob').value = data.ob;
-                document.getElementById('oc').value = data.oc;
-                document.getElementById('od').value = data.od;
-                document.getElementById('ans').value = data.ans;
-                document.getElementById('exp').value = data.exp;
-            }
-            status.innerText = "✅ AI ne data bhar diya hai!";
-        } catch (e) {
-            status.innerText = "❌ AI Error: API Key ya Connection check karein.";
-            console.error(e);
-        }
-    }
-</script>
+    <br>
+    <a href="/">Go to Home Page to see result</a>
 </body>
 </html>
