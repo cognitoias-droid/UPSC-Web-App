@@ -1,47 +1,47 @@
-import os
-import json
+import os, json
 import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "cognito_master_2026_final"
+app.secret_key = "cognito_ias_master_2026"
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
-# --- 1. DATABASE ---
+# --- DATABASE ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v4.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v5.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- 2. AI SETUP ---
+# --- AI SETUP ---
 api_key = os.environ.get("GEMINI_API_KEY")
 ai_model = None
 if api_key:
-    try:
-        genai.configure(api_key=api_key)
-        models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        ai_model = genai.GenerativeModel(models[0])
-    except: pass
+    genai.configure(api_key=api_key)
+    ai_model = genai.GenerativeModel('gemini-pro')
 
-# --- 3. MODELS ---
+# --- MODELS ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(200))
     role = db.Column(db.String(10), default='student')
+    results = db.relationship('Result', backref='student', lazy=True)
 
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True)
-    subcategories = db.relationship('SubCategory', backref='parent_category', lazy=True)
+    subcategories = db.relationship('SubCategory', backref='category', lazy=True)
 
 class SubCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    posts = db.relationship('Post', backref='sub_cat', lazy=True)
-    quizzes = db.relationship('Quiz', backref='linked_subcat', lazy=True)
+    posts = db.relationship('Post', backref='subcat', lazy=True)
+    quizzes = db.relationship('Quiz', backref='subcat', lazy=True)
+    videos = db.relationship('Video', backref='subcat', lazy=True)
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -51,121 +51,96 @@ class Post(db.Model):
 
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    topic = db.Column(db.String(100))
+    topic = db.Column(db.String(200))
+    description = db.Column(db.Text)
     sub_category_id = db.Column(db.Integer, db.ForeignKey('sub_category.id'))
-    question_data = db.Column(db.Text) 
-    time_limit = db.Column(db.Integer, default=10)
+    time_limit = db.Column(db.Integer, default=60)
     neg_marking = db.Column(db.Float, default=0.33)
+    questions = db.relationship('Question', backref='quiz', lazy=True)
+
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'))
+    text = db.Column(db.Text) 
+    opt_a = db.Column(db.Text)
+    opt_b = db.Column(db.Text)
+    opt_c = db.Column(db.Text)
+    opt_d = db.Column(db.Text)
+    correct = db.Column(db.String(1))
+    explanation = db.Column(db.Text)
+
+class Result(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'))
+    score = db.Column(db.Float)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Video(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200))
+    url = db.Column(db.String(500))
+    sub_category_id = db.Column(db.Integer, db.ForeignKey('sub_category.id'))
 
 @app.before_request
 def create_tables(): db.create_all()
 
-# --- 4. NEW AI FEATURES ---
-@app.route("/ai_write", methods=["POST"])
-def ai_write():
-    data = request.json
-    prompt = f"Write detailed UPSC notes on '{data['topic']}' in Hindi and English mix. Use HTML <h2>, <p>, <ul> tags."
-    if ai_model:
-        response = ai_model.generate_content(prompt)
-        return jsonify({"content": response.text})
-    return jsonify({"content": "AI not connected."})
-
-@app.route("/ai_create_test", methods=["POST"])
-def ai_create_test():
-    data = request.json
-    prompt = f"Create 5 UPSC MCQs from this content: {data['content']}. Return ONLY a JSON list: [{{'question':'','options':['','','',''],'answer':'A','explanation':''}}]"
-    if ai_model:
-        response = ai_model.generate_content(prompt)
-        raw = response.text.replace('```json', '').replace('```', '').strip()
-        return jsonify({"quiz": json.loads(raw)})
-    return jsonify({"quiz": []})
-
-# --- 5. ROUTES ---
+# --- ADMIN ROUTES ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin_panel():
     if session.get('role') != 'admin': return redirect(url_for('login'))
     if request.method == "POST":
-        # Add Subject logic
-        if 'cat_name' in request.form:
-            db.session.add(Category(name=request.form['cat_name']))
-        # Add Topic logic
-        if 'subcat_name' in request.form:
-            db.session.add(SubCategory(name=request.form['subcat_name'], category_id=request.form['parent_id']))
-        # Add Student logic
-        if 'new_student_id' in request.form:
-            db.session.add(User(username=request.form['new_student_id'], password=generate_password_hash(request.form['new_pwd'])))
-        # Study Material logic
-        if 'post_title' in request.form:
-            db.session.add(Post(title=request.form['post_title'], content=request.form['post_content'], sub_category_id=request.form['sub_id']))
-        # Manual Question logic
-        if 'q_text' in request.form:
-            sub_id = request.form['quiz_sub_id']
-            q_data = {"question": request.form['q_text'], "options": [request.form['opt_a'], request.form['opt_b'], request.form['opt_c'], request.form['opt_d']], "answer": request.form['q_ans'].upper()}
-            quiz = Quiz.query.filter_by(sub_category_id=sub_id).first()
-            if quiz:
-                qs = json.loads(quiz.question_data); qs.append(q_data); quiz.question_data = json.dumps(qs)
-            else:
-                db.session.add(Quiz(topic="Topic Test", sub_category_id=sub_id, question_data=json.dumps([q_data])))
+        f = request.form
+        if 'cat_name' in f: db.session.add(Category(name=f['cat_name']))
+        if 'subcat_name' in f: db.session.add(SubCategory(name=f['subcat_name'], category_id=f['parent_id']))
+        if 'quiz_topic' in f:
+            db.session.add(Quiz(topic=f['quiz_topic'], description=f['quiz_desc'], sub_category_id=f['sub_id'], time_limit=int(f['time']), neg_marking=float(f['neg'])))
+        if 'q_text' in f:
+            db.session.add(Question(quiz_id=f['target_quiz'], text=f['q_text'], opt_a=f['oa'], opt_b=f['ob'], opt_c=f['oc'], opt_d=f['od'], correct=f['ans'], explanation=f['exp']))
+        if 'video_title' in f:
+            db.session.add(Video(title=f['video_title'], url=f['video_url'], sub_category_id=f['v_sub_id']))
+        if 'post_title' in f:
+            db.session.add(Post(title=f['post_title'], content=f['post_content'], sub_category_id=f['p_sub_id']))
         db.session.commit()
-    return render_template("admin.html", categories=Category.query.all(), subcategories=SubCategory.query.all(), students=User.query.filter_by(role='student').all(), quizzes=Quiz.query.all())
+        return redirect(url_for('admin_panel'))
+    
+    return render_template("admin.html", categories=Category.query.all(), subcategories=SubCategory.query.all(), quizzes=Quiz.query.all(), students=User.query.filter_by(role='student').all())
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        user = User.query.filter_by(username=request.form['username']).first()
-        if user and check_password_hash(user.password, request.form['password']):
-            session['user_id'], session['role'], session['username'] = user.id, user.role, user.username
-            return redirect(url_for('home'))
-        return "Invalid ID or Password!"
-    return render_template("login.html")
+# --- AI ROUTES ---
+@app.route("/ai_action", methods=["POST"])
+def ai_action():
+    data = request.json
+    prompt = data.get("prompt")
+    if ai_model:
+        response = ai_model.generate_content(prompt)
+        return jsonify({"result": response.text})
+    return jsonify({"result": "AI Offline"})
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
-
-@app.route("/")
-def home(): return render_template("home.html", categories=Category.query.all())
-
-@app.route("/category/<int:cat_id>")
-def view_category(cat_id):
-    cat = Category.query.get_or_404(cat_id)
-    return render_template("category_view.html", category=cat)
-
-@app.route("/post/<int:post_id>")
-def view_post(post_id):
-    post = Post.query.get_or_404(post_id)
-    return render_template("post_view.html", post=post)
-
-@app.route("/take_test/<int:quiz_id>")
-def take_test(quiz_id):
-    quiz = Quiz.query.get_or_404(quiz_id)
-    return render_template("test_interface.html", quiz=quiz, questions=json.loads(quiz.question_data))
-
-@app.route("/create_my_admin")
-def create_my_admin():
-    if not User.query.filter_by(username="admin").first():
-        db.session.add(User(username="admin", password=generate_password_hash("cognito123"), role="admin"))
-        db.session.commit()
-    return "Admin ready! ID: admin, PWD: cognito123"
-
-@app.route("/sync_old_students")
-def sync_old_students():
-    old_data = [
-        ('COGNITOIAS0046', 'awanish rai'),
-        ('COGNITOIAS0047', 'Vishesh'),
-        ('COGNITOIAS0030', 'Aman Deep'),
-        ('COGNITOIAS0035', 'Sushmita'),
-    ]
+# --- MIGRATION ROUTE ---
+@app.route("/migrate_all")
+def migrate_all():
+    # Purane database se students migrate karna
     count = 0
-    for username, name in old_data:
-        exists = User.query.filter_by(username=username).first()
-        if not exists:
-            hashed_pwd = generate_password_hash("123456")
-            new_student = User(username=username, password=hashed_pwd, role='student')
-            db.session.add(new_student)
+    old_students = [('COGNITOIAS0046', 'awanish rai'), ('COGNITOIAS0047', 'Vishesh')] # Yahan list extend kar sakte hain
+    for uid, name in old_students:
+        if not User.query.filter_by(username=uid).first():
+            db.session.add(User(username=uid, password=generate_password_hash("123456"), role="student"))
             count += 1
     db.session.commit()
-    return f"Mubarak ho! {count} purane students merge ho gaye hain. Pass: 123456"
+    return f"{count} Students Migrated!"
+    
+@app.route("/submit_score", methods=["POST"])
+def submit_score():
+    data = request.json
+    if 'user_id' in session:
+        new_result = Result(
+            user_id=session['user_id'],
+            quiz_id=data['quiz_id'],
+            score=data['score']
+        )
+        db.session.add(new_result)
+        db.session.commit()
+        return jsonify({"status": "success"})
+    return jsonify({"status": "error"})
 
 if __name__ == "__main__": app.run(debug=True)
