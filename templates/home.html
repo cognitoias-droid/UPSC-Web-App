@@ -13,8 +13,8 @@
         
         /* Category Grid */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
-        .card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; border-top: 5px solid var(--secondary); text-decoration: none; color: inherit; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; border-top: 5px solid var(--secondary); text-decoration: none; color: inherit; display: block; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); cursor: pointer; }
         .card h3 { margin: 0.5rem 0; color: var(--primary); }
         .card p { font-size: 0.9rem; color: #666; }
 
@@ -49,7 +49,7 @@
 
     <div class="grid">
         {% for cat in categories %}
-        <a href="#" class="card">
+        <a href="/category/{{ cat.id }}" class="card">
             <i class="fas fa-book-reader fa-2x" style="color: var(--secondary);"></i>
             <h3>{{ cat.name }}</h3>
             <p>{{ cat.subcategories|length }} Topics available</p>
@@ -139,16 +139,14 @@ function checkAnswer(element, selected, correct, expId) {
     const parent = element.parentElement;
     const labels = parent.querySelectorAll('.option-label');
     
-    // Disable all options once clicked
     labels.forEach(l => l.style.pointerEvents = 'none');
 
-    if(selected.startsWith(correct)) {
+    if(selected.trim().startsWith(correct.trim()) || selected.trim() === correct.trim()) {
         element.classList.add('correct');
     } else {
         element.classList.add('wrong');
-        // Show correct one too
         labels.forEach(l => {
-            if(l.innerText.trim().startsWith(correct)) l.classList.add('correct');
+            if(l.innerText.trim().startsWith(correct.trim())) l.classList.add('correct');
         });
     }
     document.getElementById(expId).style.display = "block";
