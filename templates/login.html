@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cognito IAS Academy</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --bg: #f4f7f6;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a2a3a 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 2.5rem;
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .logo span { color: var(--secondary); }
+        h2 { color: #555; margin-bottom: 30px; font-weight: 500; }
+        
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group i {
+            position: absolute;
+            left: 15px;
+            top: 40px;
+            color: #999;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+        input {
+            width: 100%;
+            padding: 12px 12px 12px 45px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+        input:focus {
+            border-color: var(--secondary);
+            outline: none;
+        }
+        .btn-login {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        .btn-login:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        .footer-text {
+            margin-top: 25px;
+            color: #777;
+            font-size: 0.9rem;
+        }
+        .footer-text a {
+            color: var(--secondary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="logo">Cognito<span>IAS</span></div>
+    <h2>Learning Portal Login</h2>
+
+    <form action="/login" method="POST">
+        <div class="form-group">
+            <label>Student ID / Admin ID</label>
+            <i class="fas fa-user"></i>
+            <input type="text" name="username" placeholder="Enter your ID" required>
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <i class="fas fa-lock"></i>
+            <input type="password" name="password" placeholder="Enter your password" required>
+        </div>
+
+        <button type="submit" class="btn-login">Login to Dashboard</button>
+    </form>
+
+    <div class="footer-text">
+        <p>Password bhool gaye? <a href="#">Contact Admin</a></p>
+        <p style="margin-top: 10px; font-weight: bold; color: var(--primary);">Shiksha hi Shakti hai.</p>
+    </div>
+</div>
+
+</body>
+</html>
