@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <style>
+        .test-container { display: grid; grid-template-columns: 1fr 300px; gap: 20px; padding: 20px; }
+        .question-area { background: white; padding: 30px; border-radius: 10px; }
+        .side-panel { background: #f8f9fa; padding: 20px; border-radius: 10px; height: fit-content; }
+        .q-number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
+        .q-btn { width: 40px; height: 40px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: white; }
+        .attempted { background: #27ae60; color: white; }
+        .skipped { background: #f1c40f; color: white; }
+        .current { border: 2px solid #3498db; font-weight: bold; }
+        #timer { font-size: 1.5rem; font-weight: bold; color: #e74c3c; text-align: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="question-area">
+            <div id="question-content">
+                </div>
+            <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+                <button onclick="prevQuestion()" class="btn">Previous</button>
+                <button onclick="markAsSkipped()" class="btn" style="background:#f39c12;">Mark for Review</button>
+                <button onclick="nextQuestion()" class="btn" style="background:#27ae60;">Save & Next</button>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div id="timer">Time Left: <span id="time-val">--:--</span></div>
+            <h4>Question Palette</h4>
+            <div class="q-number-grid" id="palette">
+                </div>
+            <div style="margin-top: 20px; font-size: 0.8rem;">
+                <div><span style="color:#27ae60;">●</span> Attempted</div>
+                <div><span style="color:#f1c40f;">●</span> Marked for Review</div>
+                <div><span style="color:#ccc;">●</span> Not Visited</div>
+            </div>
+            <button onclick="submitTest()" class="btn" style="background:#c0392b; margin-top: 20px;">Final Submit</button>
+        </div>
+    </div>
+
+    <script>
+        let questions = {{ questions|tojson }};
+        let currentIdx = 0;
+        let status = new Array(questions.length).fill('unvisited'); // status tracker
+
+        function renderPalette() {
+            let html = '';
+            status.forEach((s, i) => {
+                let cls = (i === currentIdx) ? 'current' : s;
+                html += `<div class="q-btn ${cls}" onclick="goToQuestion(${i})">${i+1}</div>`;
+            });
+            document.getElementById('palette').innerHTML = html;
+        }
+
+        function goToQuestion(idx) {
+            currentIdx = idx;
+            let q = questions[currentIdx];
+            document.getElementById('question-content').innerHTML = `
+                <h3>Question ${currentIdx + 1}</h3>
+                <p style="font-size:1.2rem;">${q.question}</p>
+                ${q.options.map((opt, i) => `
+                    <label style="display:block; margin:10px 0; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                        <input type="radio" name="ans" value="${opt}"> ${opt}
+                    </label>
+                `).join('')}
+            `;
+            renderPalette();
+        }
+
+        // Timer Logic
+        let timeLeft = {{ quiz.time_limit }} * 60;
+        setInterval(() => {
+            let m = Math.floor(timeLeft / 60);
+            let s = timeLeft % 60;
+            document.getElementById('time-val').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+            if(timeLeft <= 0) submitTest();
+            timeLeft--;
+        }, 1000);
+
+        goToQuestion(0);
+    </script>
+</body>
+</html>
