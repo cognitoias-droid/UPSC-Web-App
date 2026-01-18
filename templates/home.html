@@ -3,20 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cognito IAS - AI Portal</title>
+    <title>Cognito IAS - Learning Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; margin: 0; }
-        .navbar { background: #1a252f; color: white; padding: 15px; text-align: center; }
-        .container { max-width: 900px; margin: 30px auto; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        .hero { text-align: center; padding: 20px; background: #3498db; color: white; border-radius: 10px; margin-bottom: 25px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
-        .card { padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center; transition: 0.3s; cursor: pointer; }
-        .card:hover { background: #ebf5fb; transform: translateY(-3px); }
-        .ai-box { margin-top: 40px; padding: 25px; background: #fff; border: 2px solid #3498db; border-radius: 12px; }
-        .ai-input { width: 70%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; }
-        .ai-btn { padding: 12px 25px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        #ai-response { margin-top: 20px; padding: 15px; background: #fdfefe; border-left: 5px solid #3498db; display: none; white-space: pre-wrap; line-height: 1.6; text-align: left; }
+        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: #333; }
+        .navbar { background: var(--primary); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+        
+        /* Category Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; border-top: 5px solid var(--secondary); text-decoration: none; color: inherit; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .card h3 { margin: 0.5rem 0; color: var(--primary); }
+        .card p { font-size: 0.9rem; color: #666; }
+
+        /* AI Quiz Section */
+        .ai-section { background: white; padding: 2rem; border-radius: 15px; margin-top: 3rem; border: 1px solid #ddd; }
+        .ai-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; color: var(--secondary); }
+        .input-group { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+        input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
+        .btn { background: var(--secondary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        /* Interactive Quiz Layout */
+        .quiz-container { margin-top: 2rem; display: none; }
+        .question-card { background: #fff; padding: 1.5rem; border-radius: 10px; border-left: 5px solid var(--secondary); margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .option-label { display: block; padding: 10px; margin: 5px 0; background: #f9f9f9; border-radius: 5px; cursor: pointer; border: 1px solid #eee; }
+        .option-label:hover { background: #edf7ff; }
+        .correct { background: #d4edda !important; border-color: #c3e6cb !important; }
+        .wrong { background: #f8d7da !important; border-color: #f5c6cb !important; }
+        .explanation { margin-top: 10px; padding: 10px; background: #e7f3fe; border-radius: 5px; font-size: 0.9rem; display: none; }
     </style>
 </head>
 <body>
@@ -26,52 +42,116 @@
 </div>
 
 <div class="container">
-    <div class="hero">
-        <h2>UPSC AI Migration Portal</h2>
-        <p>Aapke purane SQL data aur AI ki shakti ke saath.</p>
+    <div style="text-align: center; margin-bottom: 3rem;">
+        <h2>Swagat hai, Vikas ji!</h2>
+        <p>Aapke UPSC subjects aur AI-driven tests yahan dikhenge.</p>
     </div>
 
     <div class="grid">
         {% for cat in categories %}
-        <div class="card">
-            <i class="fas fa-book-open" style="font-size: 24px; color: #3498db;"></i>
-            <h4>{{ cat }}</h4>
-        </div>
+        <a href="#" class="card">
+            <i class="fas fa-book-reader fa-2x" style="color: var(--secondary);"></i>
+            <h3>{{ cat.name }}</h3>
+            <p>{{ cat.subcategories|length }} Topics available</p>
+        </a>
         {% endfor %}
+        
+        <a href="/admin" class="card" style="border-top-color: #e67e22; background: #fffaf5;">
+            <i class="fas fa-user-shield fa-2x" style="color: #e67e22;"></i>
+            <h3>Admin Panel</h3>
+            <p>Naye subjects aur data jodein</p>
+        </a>
     </div>
 
-    <div class="ai-box">
-        <h3><i class="fas fa-robot"></i> AI Quiz Master</h3>
-        <p>Koi bhi UPSC topic likhein:</p>
-        <input type="text" id="ai-topic" class="ai-input" placeholder="e.g. Fundamental Rights">
-        <button onclick="generate()" class="ai-btn">Sawal Banayein</button>
-        <div id="ai-response"></div>
+    <div class="ai-section">
+        <div class="ai-header">
+            <i class="fas fa-robot fa-2x"></i>
+            <h3>Magic AI Test Generator (Interactive)</h3>
+        </div>
+        <p>Topic likhein aur AI turant click karne wala test taiyar kar dega.</p>
+        <div class="input-group">
+            <input type="text" id="quiz-topic" placeholder="e.g. Indus Valley Civilization ya Current Affairs Jan 2026">
+            <button onclick="generateInteractiveQuiz()" class="btn" id="gen-btn">Generate Test</button>
+        </div>
+
+        <div id="quiz-loading" style="display:none; text-align:center;">
+            <i class="fas fa-spinner fa-spin fa-2x"></i> <p>AI UPSC level ke sawal taiyar kar raha hai...</p>
+        </div>
+
+        <div id="quiz-display" class="quiz-container">
+            </div>
     </div>
 </div>
 
 <script>
-function generate() {
-    let t = document.getElementById('ai-topic').value;
-    let r = document.getElementById('ai-response');
-    if(!t) { alert("Topic likhna zaroori hai!"); return; }
-    
-    r.style.display = "block";
-    r.innerHTML = "<b>⏳ AI Sawal taiyar kar raha hai... Kripya 5-10 second rukiye...</b>";
+async function generateInteractiveQuiz() {
+    const topic = document.getElementById('quiz-topic').value;
+    const display = document.getElementById('quiz-display');
+    const loading = document.getElementById('quiz-loading');
+    const btn = document.getElementById('gen-btn');
 
-    fetch('/generate_quiz', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({topic: t})
-    })
-    .then(res => res.json())
-    .then(data => {
+    if(!topic) { alert("Vikas ji, topic likhna zaroori hai!"); return; }
+
+    btn.disabled = true;
+    loading.style.display = "block";
+    display.style.display = "none";
+
+    try {
+        const response = await fetch('/generate_quiz', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({topic: topic})
+        });
+        const data = await response.json();
+
         if(data.status === "success") {
-            r.innerHTML = "<h4>AI Results:</h4><hr>" + data.quiz;
+            let html = `<h3>Topic: ${topic}</h3><hr>`;
+            data.quiz.forEach((q, qIndex) => {
+                html += `
+                <div class="question-card">
+                    <p><b>Q${qIndex+1}. ${q.question}</b></p>
+                    <div id="options-${qIndex}">
+                        ${q.options.map(opt => `
+                            <label class="option-label" onclick="checkAnswer(this, '${opt}', '${q.answer}', 'exp-${qIndex}')">
+                                ${opt}
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div id="exp-${qIndex}" class="explanation">
+                        <b>Answer: ${q.answer}</b><br>${q.explanation}
+                    </div>
+                </div>`;
+            });
+            display.innerHTML = html;
+            display.style.display = "block";
         } else {
-            r.innerHTML = "❌ Galti: " + data.message;
+            alert("Galti: " + data.message);
         }
-    })
-    .catch(e => { r.innerHTML = "❌ Server error!"; });
+    } catch (e) {
+        alert("Server Error!");
+    } finally {
+        loading.style.display = "none";
+        btn.disabled = false;
+    }
+}
+
+function checkAnswer(element, selected, correct, expId) {
+    const parent = element.parentElement;
+    const labels = parent.querySelectorAll('.option-label');
+    
+    // Disable all options once clicked
+    labels.forEach(l => l.style.pointerEvents = 'none');
+
+    if(selected.startsWith(correct)) {
+        element.classList.add('correct');
+    } else {
+        element.classList.add('wrong');
+        // Show correct one too
+        labels.forEach(l => {
+            if(l.innerText.trim().startsWith(correct)) l.classList.add('correct');
+        });
+    }
+    document.getElementById(expId).style.display = "block";
 }
 </script>
 
