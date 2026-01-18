@@ -8,15 +8,15 @@ app = Flask(__name__)
 
 # --- 1. DATABASE CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v2.db')
+# Database ka naam thoda badal dete hain taaki naya system fresh start kare
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v3.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- 2. AI SETUP (STABLE VERSION) ---
+# --- 2. AI SETUP ---
 api_key = os.environ.get("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
-    # 2026 Stable Model
     ai_model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     ai_model = None
@@ -42,43 +42,44 @@ class Post(db.Model):
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     topic = db.Column(db.String(100))
-    # Quiz data ko JSON format mein save karne ke liye
     question_data = db.Column(db.Text) 
 
 # --- 4. ROUTES ---
 
-# Home Page: Sari categories aur posts dikhayega
 @app.route("/")
 def home():
-    categories = Category.query.all()
-    return render_template("home.html", categories=categories)
+    try:
+        categories = Category.query.all()
+        return render_template("home.html", categories=categories)
+    except Exception as e:
+        # Agar table nahi mili toh system ko batayein ki database create karein
+        return f"Database Initialization Pending. Please refresh this page. Error: {str(e)}"
 
-# Admin Panel: Jahan se aap Category/Subcategory add karenge
 @app.route("/admin", methods=["GET", "POST"])
 def admin_panel():
-    if request.method == "POST":
-        # Nayi Category add karna
-        if 'cat_name' in request.form:
-            name = request.form['cat_name']
-            if name:
-                new_cat = Category(name=name)
-                db.session.add(new_cat)
-        
-        # Nayi Subcategory add karna
-        if 'subcat_name' in request.form:
-            sub_name = request.form['subcat_name']
-            parent_id = request.form['parent_id']
-            if sub_name and parent_id:
-                new_sub = SubCategory(name=sub_name, category_id=parent_id)
-                db.session.add(new_sub)
-        
-        db.session.commit()
-        return redirect(url_for('admin_panel'))
+    try:
+        if request.method == "POST":
+            if 'cat_name' in request.form:
+                name = request.form['cat_name']
+                if name:
+                    new_cat = Category(name=name)
+                    db.session.add(new_cat)
+            
+            if 'subcat_name' in request.form:
+                sub_name = request.form['subcat_name']
+                parent_id = request.form['parent_id']
+                if sub_name and parent_id:
+                    new_sub = SubCategory(name=sub_name, category_id=parent_id)
+                    db.session.add(new_sub)
+            
+            db.session.commit()
+            return redirect(url_for('admin_panel'))
 
-    categories = Category.query.all()
-    return render_template("admin.html", categories=categories)
+        categories = Category.query.all()
+        return render_template("admin.html", categories=categories)
+    except Exception as e:
+        return f"Admin Panel Error: {str(e)}"
 
-# Interactive Quiz Generation & Saving
 @app.route("/generate_quiz", methods=["POST"])
 def generate_quiz():
     if not ai_model:
@@ -86,19 +87,13 @@ def generate_quiz():
     
     data = request.json
     topic = data.get("topic", "UPSC")
-    
-    # AI ko Interactive JSON mangne ka prompt
-    prompt = f"""
-    Create 5 UPSC MCQs on {topic}. Return ONLY a JSON list.
-    Format: [{{"question": "...", "options": ["A", "B", "C", "D"], "answer": "A", "explanation": "..."}}]
-    """
+    prompt = f'Create 5 UPSC MCQs on {topic}. Return ONLY a JSON list. Format: [{{"question": "...", "options": ["A", "B", "C", "D"], "answer": "A", "explanation": "..."}}]'
     
     try:
         response = ai_model.generate_content(prompt)
         raw_text = response.text.strip().replace('```json', '').replace('```', '')
         quiz_json = json.loads(raw_text)
         
-        # Database mein save karna taaki tests mein use ho sake
         new_quiz = Quiz(topic=topic, question_data=raw_text)
         db.session.add(new_quiz)
         db.session.commit()
@@ -109,5 +104,6 @@ def generate_quiz():
 
 if __name__ == "__main__":
     with app.app_context():
+        # Ye line naya database banayegi
         db.create_all()
     app.run(debug=True)
