@@ -1,88 +1,24 @@
 <!DOCTYPE html>
-<html lang="hi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cognito IAS - Student Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
-        .navbar { background: var(--primary); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; }
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-        
-        .welcome-card { background: linear-gradient(135deg, var(--primary), #1a2a3a); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; }
-        .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
-        
-        .section-title { font-size: 1.4rem; color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        .test-item { border-left: 5px solid var(--secondary); display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: #fff; border-radius: 8px; }
-        .result-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
-        
-        .btn { padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: 0.3s; display: inline-block; }
-        .btn-start { background: var(--success); color: white; }
-        .btn-start:hover { background: #219150; }
-        .score-badge { background: #e1f5fe; color: #0288d1; padding: 4px 10px; border-radius: 20px; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-<div class="navbar">
-    <div style="font-size: 1.5rem; font-weight: bold;">Cognito<span>IAS</span></div>
-    <div>
-        <span>Bhartiya Swagat hai, <b>{{ user.name }}</b></span>
-        <a href="/logout" style="color: #ecf0f1; margin-left: 20px; text-decoration: none;"><i class="fas fa-sign-out-alt"></i></a>
-    </div>
-</div>
-
-<div class="container">
-    <div class="welcome-card">
-        <h1>Hello, {{ user.name }}!</h1>
-        <p>Aapki UPSC taiyari ko aur mazboot banayein. Aaj ke naye tests niche diye gaye hain.</p>
-    </div>
-
-    <div class="grid">
-        <div class="main-content">
-            <h3 class="section-title"><i class="fas fa-pen-nib"></i> Available Tests</h3>
-            {% for quiz in available_quizzes %}
-            <div class="test-item card">
-                <div>
-                    <h4 style="margin:0;">{{ quiz.topic }}</h4>
-                    <small style="color: #666;">Time: {{ quiz.time_limit }} Mins | Neg. Marking: {{ quiz.neg_marking }}</small>
-                </div>
-                <a href="/take_test/{{ quiz.id }}" class="btn btn-start">Start Test</a>
-            </div>
-            {% else %}
-            <p>Abhi koi naya test available nahi hai.</p>
-            {% endfor %}
-        </div>
-
-        <div class="sidebar">
-            <h3 class="section-title"><i class="fas fa-history"></i> Your Results</h3>
-            <div class="card">
-                {% for res in user_results %}
-                <div class="result-row">
-                    <div>
-                        <div style="font-weight:bold; font-size:0.9rem;">{{ res.quiz.topic }}</div>
-                        <small style="color: #999;">{{ res.timestamp.strftime('%d %b') }}</small>
-                    </div>
-                    <div class="score-badge">{{ res.score }}</div>
-                </div>
+<html>
+<head><title>Cognito IAS - Home</title></head>
+<body style="font-family: Arial; padding: 20px; background: #f4f4f4;">
+    <h1>Cognito IAS - Student Portal</h1>
+    <hr>
+    <h3>Available Courses/Categories:</h3>
+    
+    <div style="display: flex; gap: 20px;">
+        {% for cat in categories %}
+        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 250px;">
+            <h2 style="color: blue;">{{ cat.name }}</h2>
+            <ul>
+                {% for sub in cat.subcats %}
+                <li>{{ sub.name }}</li>
                 {% else %}
-                <p style="text-align:center; color:#999;">Abhi tak koi test nahi diya.</p>
+                <li>No sub-categories yet</li>
                 {% endfor %}
-            </div>
-
-            <div class="card" style="background: #e8f4fd; border: 1px solid #b3d7f2;">
-                <h4 style="margin:0; color: #2980b9;">Preparation Stats</h4>
-                <p style="margin: 10px 0 0 0; font-size: 0.9rem;">
-                    Tests Completed: <b>{{ user_results|length }}</b>
-                </p>
-            </div>
+            </ul>
         </div>
+        {% endfor %}
     </div>
-</div>
-
 </body>
 </html>
