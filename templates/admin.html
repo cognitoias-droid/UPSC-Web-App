@@ -1,88 +1,152 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-    <title>Cognito Master Admin</title>
+    <meta charset="UTF-8">
+    <title>Cognito IAS - Master Control Panel</title>
     <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; display: flex; margin: 0; background: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; display: flex; margin: 0; background: #f4f7f6; }
         .sidebar { width: 260px; background: #2c3e50; color: white; height: 100vh; position: fixed; padding: 20px; }
-        .content { margin-left: 280px; padding: 30px; width: calc(100% - 300px); }
-        .card { background: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
-        .bg-blue { background: #3498db; } .bg-green { background: #27ae60; } .bg-orange { background: #e67e22; }
+        .main-content { margin-left: 280px; padding: 30px; width: calc(100% - 310px); }
+        .card { background: white; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn { padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; transition: 0.3s; }
+        .bg-blue { background: #3498db; } .bg-green { background: #27ae60; } .bg-purple { background: #8e44ad; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #2c3e50; }
     </style>
 </head>
 <body>
+
 <div class="sidebar">
-    <h2><i class="fas fa-university"></i> Cognito Admin</h2>
+    <h2 style="text-align:center;">Cognito Admin</h2>
     <hr>
-    <a href="#cat" style="color:white;display:block;margin:15px 0;text-decoration:none;">Category Manager</a>
-    <a href="#exam" style="color:white;display:block;margin:15px 0;text-decoration:none;">Exam Builder</a>
-    <a href="#video" style="color:white;display:block;margin:15px 0;text-decoration:none;">Video Lectures</a>
+    <p><i class="fas fa-tachometer-alt"></i> Dashboard</p>
+    <p><i class="fas fa-users"></i> Students List</p>
+    <p><i class="fas fa-book"></i> Exam Builder</p>
+    <p><i class="fas fa-video"></i> Video Lectures</p>
+    <a href="/logout" style="color:#e74c3c; text-decoration:none; font-weight:bold;">Logout</a>
 </div>
 
-<div class="content">
+<div class="main-content">
     <h1><i class="fas fa-tools"></i> Control Panel</h1>
 
-    <div class="card" style="border-left: 5px solid #8e44ad;">
-        <h3><i class="fas fa-robot"></i> AI Study Tool</h3>
-        <input type="text" id="ai_prompt" placeholder="Write a topic for AI to generate notes or questions..." style="width:70%; padding:10px;">
-        <button onclick="generateAI()" class="btn bg-orange">Generate with AI</button>
-        <div id="ai_out" style="margin-top:15px; padding:10px; background:#f0f7ff; display:none;"></div>
-    </div>
-
-    <div id="exam" class="card">
-        <h3>Step 1: Create New Exam Series</h3>
-        <form method="POST">
-            <input type="text" name="quiz_topic" placeholder="Series Name (e.g. Modern History)" required style="width:100%; margin-bottom:10px;">
-            <select name="cat_id" style="width:100%; margin-bottom:10px;">
-                {% for c in categories %}<option value="{{c.id}}">{{c.name}}</option>{% endfor %}
-            </select>
-            <textarea name="quiz_desc" placeholder="Exam Description"></textarea>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <input type="number" name="time" placeholder="Time (Min)" value="60">
-                <input type="number" step="0.01" name="neg" placeholder="Neg Marking" value="0.33">
-            </div>
-            <button type="submit" class="btn bg-blue" style="margin-top:15px;">Create Series</button>
-        </form>
+    <div class="card" style="border-left: 6px solid #8e44ad;">
+        <h3><i class="fas fa-robot"></i> AI Question Generator</h3>
+        <p>Topic likhein aur AI aapke liye UPSC level MCQ banayega:</p>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="ai_topic" placeholder="e.g. Fundamental Rights or Indus Valley Civilization">
+            <button onclick="askAI()" id="ai_btn" class="btn bg-purple" style="white-space:nowrap;">Generate MCQ</button>
+        </div>
     </div>
 
     <div class="card">
-        <h3>Step 2: Add Manual Questions with Editor</h3>
+        <h3><i class="fas fa-users"></i> Registered Students</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td><b>{{ s.username }}</b></td>
+                    <td>{{ s.name }}</td>
+                    <td><button class="btn bg-blue" style="padding: 5px 10px; font-size: 0.8rem;">View Progress</button></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" style="text-align:center; color:#999;">Koi student nahi mila. Migration run karein.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-edit"></i> Add/Edit Question Manually</h3>
         <form method="POST">
-            <select name="quiz_id" style="width:100%; margin-bottom:10px;">
+            <label>Select Exam/Quiz</label>
+            <select name="quiz_id">
                 {% for q in quizzes %}<option value="{{q.id}}">{{q.topic}}</option>{% endfor %}
             </select>
-            <label>Question (Editor Supported)</label>
-            <textarea name="q_text" id="q_edit"></textarea>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                <input type="text" name="oa" placeholder="Option A">
-                <input type="text" name="ob" placeholder="Option B">
-                <input type="text" name="oc" placeholder="Option C">
-                <input type="text" name="od" placeholder="Option D">
+
+            <label>Question Text</label>
+            <textarea name="q_text" id="editor_q"></textarea>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;">
+                <input type="text" name="oa" id="oa" placeholder="Option A" required>
+                <input type="text" name="ob" id="ob" placeholder="Option B" required>
+                <input type="text" name="oc" id="oc" placeholder="Option C" required>
+                <input type="text" name="od" id="od" placeholder="Option D" required>
             </div>
-            
-            <label style="display:block; margin-top:10px;">Correct Answer & Explanation</label>
-            <select name="ans"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>
-            <textarea name="exp" id="exp_edit" placeholder="Explanation..."></textarea>
-            <button type="submit" class="btn bg-green" style="margin-top:15px;">Save Question</button>
+
+            <label>Correct Answer</label>
+            <select name="ans" id="ans">
+                <option value="A">A</option><option value="B">B</option>
+                <option value="C">C</option><option value="D">D</option>
+            </select>
+
+            <label>Detailed Explanation</label>
+            <textarea name="exp" id="editor_exp"></textarea>
+
+            <button type="submit" class="btn bg-green" style="margin-top:20px; width:100%;">Save Question to Database</button>
         </form>
     </div>
 </div>
 
 <script>
-    CKEDITOR.replace('q_edit');
-    CKEDITOR.replace('exp_edit');
+    // CKEDITOR Initialization
+    CKEDITOR.replace('editor_q');
+    CKEDITOR.replace('editor_exp');
 
-    async function generateAI() {
-        let p = document.getElementById('ai_prompt').value;
-        const res = await fetch('/ai_call', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt:p})});
-        const data = await res.json();
-        document.getElementById('ai_out').style.display = 'block';
-        document.getElementById('ai_out').innerHTML = "<b>AI Response:</b><br>" + data.result;
+    // AI Generator Logic
+    async function askAI() {
+        const topic = document.getElementById('ai_topic').value;
+        const btn = document.getElementById('ai_btn');
+        
+        if(!topic) { alert("Pehle topic likhiye!"); return; }
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI Thinking...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/generate_quiz', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({topic: topic})
+            });
+            
+            const data = await response.json();
+
+            if(data.question) {
+                // Set Data into CKEDITOR
+                CKEDITOR.instances.editor_q.setData(data.question);
+                CKEDITOR.instances.editor_exp.setData(data.exp || data.explanation);
+                
+                // Set Options
+                document.getElementById('oa').value = data.oa || data.options[0];
+                document.getElementById('ob').value = data.ob || data.options[1];
+                document.getElementById('oc').value = data.oc || data.options[2];
+                document.getElementById('od').value = data.od || data.options[3];
+                document.getElementById('ans').value = data.ans || data.correct;
+                
+                alert("AI ne sawal bana diya hai! Ab aap ise check karke save kar sakte hain.");
+            } else {
+                alert("AI Error: " + (data.error || "Sawal nahi ban paya."));
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Connection Error! Render logs check karein.");
+        } finally {
+            btn.innerHTML = 'Generate MCQ';
+            btn.disabled = false;
+        }
     }
 </script>
+
 </body>
 </html>
