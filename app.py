@@ -8,8 +8,8 @@ app = Flask(__name__)
 
 # --- 1. DATABASE CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Database ka naam thoda badal dete hain taaki naya system fresh start kare
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v3.db')
+# Fresh start ke liye hum v4 use kar rahe hain
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v4.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -44,27 +44,35 @@ class Quiz(db.Model):
     topic = db.Column(db.String(100))
     question_data = db.Column(db.Text) 
 
-# --- 4. ROUTES ---
+# --- 4. AUTO-TABLE CREATION (Crucial for Render) ---
+@app.before_request
+def create_tables():
+    # Ye line har baar check karegi aur tables banayegi
+    db.create_all()
+
+# --- 5. ROUTES ---
 
 @app.route("/")
 def home():
     try:
+        # Database se saari categories uthana
         categories = Category.query.all()
         return render_template("home.html", categories=categories)
     except Exception as e:
-        # Agar table nahi mili toh system ko batayein ki database create karein
-        return f"Database Initialization Pending. Please refresh this page. Error: {str(e)}"
+        return f"Home Page Error: {str(e)}"
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin_panel():
     try:
         if request.method == "POST":
+            # 1. Nayi Category save karna
             if 'cat_name' in request.form:
                 name = request.form['cat_name']
                 if name:
                     new_cat = Category(name=name)
                     db.session.add(new_cat)
             
+            # 2. Nayi Subcategory save karna
             if 'subcat_name' in request.form:
                 sub_name = request.form['subcat_name']
                 parent_id = request.form['parent_id']
@@ -75,6 +83,7 @@ def admin_panel():
             db.session.commit()
             return redirect(url_for('admin_panel'))
 
+        # GET request: Admin page dikhana
         categories = Category.query.all()
         return render_template("admin.html", categories=categories)
     except Exception as e:
@@ -94,6 +103,7 @@ def generate_quiz():
         raw_text = response.text.strip().replace('```json', '').replace('```', '')
         quiz_json = json.loads(raw_text)
         
+        # Database mein save karna
         new_quiz = Quiz(topic=topic, question_data=raw_text)
         db.session.add(new_quiz)
         db.session.commit()
@@ -103,7 +113,4 @@ def generate_quiz():
         return jsonify({"status": "error", "message": str(e)})
 
 if __name__ == "__main__":
-    with app.app_context():
-        # Ye line naya database banayegi
-        db.create_all()
     app.run(debug=True)
