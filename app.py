@@ -6,25 +6,26 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "cognito_master_final_2026")
+app.secret_key = os.environ.get("SECRET_KEY", "cognito_final_master_2026")
 
-# --- DATABASE ---
+# --- DATABASE SETUP ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v40.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v70.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- AI SETUP ---
+# --- AI MODEL INITIALIZATION ---
+# Is logic se AI model khud ko environment se connect kar lega
 api_key = os.environ.get("GEMINI_API_KEY")
+ai_model = None
 if api_key:
     genai.configure(api_key=api_key)
     ai_model = genai.GenerativeModel('gemini-pro')
 
-# --- MODELS ---
+# --- MODELS (As per WRD Requirements) ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True)
-    name = db.Column(db.String(100))
     password = db.Column(db.String(200))
     role = db.Column(db.String(10), default='student')
 
@@ -37,13 +38,12 @@ class SubCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    tests = db.relationship('Test', backref='subcat_parent', lazy=True)
 
 class Test(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200))
-    subcat_id = db.Column(db.Integer, db.ForeignKey('sub_category.id'))
-    test_type = db.Column(db.String(20)) # 'Practice' or 'Exam'
+    subcat_id = db.Column(db.Integer)
+    test_type = db.Column(db.String(20)) # Practice / Exam
     questions = db.relationship('Question', backref='test_parent', lazy=True)
 
 class Question(db.Model):
@@ -61,42 +61,9 @@ class Question(db.Model):
 def system_init():
     db.create_all()
     if not User.query.filter_by(username='admin').first():
-        db.session.add(User(username='admin', name='Vikas Sir', password=generate_password_hash('cognito123'), role='admin'))
+        db.session.add(User(username='admin', password=generate_password_hash('cognito123'), role='admin'))
         db.session.commit()
-    return "SUCCESS: Platform Ready. Login with admin/cognito123"
-
-@app.route("/api/ai_assist", methods=["POST"])
-def ai_assist():
-    try:
-        data = request.json
-        topic = data.get("topic")
-        task = data.get("type")
-        
-        if task == 'post':
-            prompt = f"Write UPSC study notes on {topic} in Hindi and English. Use HTML tags for formatting."
-            response = ai_model.generate_content(prompt)
-            return jsonify({"result": response.text})
-        else:
-            prompt = (f"Create 1 UPSC MCQ on {topic}. Return ONLY a JSON object: "
-                      f"{{\"q_en\":\"..\",\"q_hi\":\"..\",\"oa\":\"..\",\"ob\":\"..\",\"oc\":\"..\",\"od\":\"..\",\"ans\":\"A/B/C/D\",\"exp\":\"..\"}}")
-            response = ai_model.generate_content(prompt)
-            # JSON extraction logic
-            json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
-            return jsonify(json.loads(json_match.group()))
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/admin/save_question", methods=["POST"])
-def save_question():
-    f = request.form
-    new_q = Question(
-        test_id=f.get('test_id'), text_en=f.get('q_en'), text_hi=f.get('q_hi'),
-        opt_a=f.get('oa'), opt_b=f.get('ob'), opt_c=f.get('oc'), opt_d=f.get('od'),
-        correct_ans=f.get('ans'), explanation=f.get('exp')
-    )
-    db.session.add(new_q)
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
+    return "SUCCESS: Platform Ready. Login: admin/cognito123"
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -112,10 +79,63 @@ def admin_dashboard():
     if session.get('role') != 'admin': return redirect(url_for('login'))
     return render_template("admin.html", categories=Category.query.all(), tests=Test.query.all())
 
+# Fixed Routes to prevent "Not Found"
+@app.route("/admin/add_category", methods=["POST"])
+def add_category():
+    name = request.form.get("cat_name")
+    if name:
+        db.session.add(Category(name=name))
+        db.session.commit()
+    return redirect(url_for('admin_dashboard'))
+
+@app.route("/admin/save_question", methods=["POST"])
+def save_question():
+    f = request.form
+    new_q = Question(
+        test_id=f.get('test_id'), text_en=f.get('q_en'), text_hi=f.get('q_hi'),
+        opt_a=f.get('oa'), opt_b=f.get('ob'), opt_c=f.get('oc'), opt_d=f.get('od'),
+        correct_ans=f.get('ans'), explanation=f.get('exp')
+    )
+    db.session.add(new_q)
+    db.session.commit()
+    return redirect(url_for('admin_dashboard'))
+
+# --- AI ASSIST LOGIC (Fixed & Robust) ---
+@app.route("/api/ai_assist", methods=["POST"])
+def ai_assist():
+    try:
+        if not ai_model: return jsonify({"error": "API Key Missing"}), 500
+        data = request.json
+        topic = data.get("topic")
+        task = data.get("type")
+
+        if task == 'post':
+            prompt = f"Write detailed UPSC study notes on {topic} in Bilingual (Hindi/English). Use HTML tags."
+            response = ai_model.generate_content(prompt)
+            return jsonify({"result": response.text})
+        else:
+            # Sakht instruction taaki AI sirf JSON de
+            prompt = (f"Create 1 UPSC MCQ on {topic}. Return ONLY a raw JSON object. "
+                      f"Format: {{\"q_en\":\"..\",\"q_hi\":\"..\",\"oa\":\"..\",\"ob\":\"..\",\"oc\":\"..\",\"od\":\"..\",\"ans\":\"A/B/C/D\",\"exp\":\"..\"}}")
+            response = ai_model.generate_content(prompt)
+            
+            # Regex se sirf JSON nikalna (Puraani galti sudhaar di gayi hai)
+            json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
+            if json_match:
+                return jsonify(json.loads(json_match.group()))
+            else:
+                return jsonify({"error": "AI response format invalid"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/")
 def home():
     if 'user_id' not in session: return redirect(url_for('login'))
     return render_template("home.html", categories=Category.query.all())
+
+@app.route("/logout")
+def logout():
+    session.clear(); return redirect(url_for('login'))
 
 if __name__ == "__main__":
     app.run(debug=True)
