@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # --- 1. DATABASE CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Fresh start ke liye hum v4 use kar rahe hain
+# Fresh start ke liye v4 use kar rahe hain
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v4.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -44,10 +44,9 @@ class Quiz(db.Model):
     topic = db.Column(db.String(100))
     question_data = db.Column(db.Text) 
 
-# --- 4. AUTO-TABLE CREATION (Crucial for Render) ---
+# --- 4. AUTO-TABLE CREATION ---
 @app.before_request
 def create_tables():
-    # Ye line har baar check karegi aur tables banayegi
     db.create_all()
 
 # --- 5. ROUTES ---
@@ -55,7 +54,6 @@ def create_tables():
 @app.route("/")
 def home():
     try:
-        # Database se saari categories uthana
         categories = Category.query.all()
         return render_template("home.html", categories=categories)
     except Exception as e:
@@ -65,14 +63,12 @@ def home():
 def admin_panel():
     try:
         if request.method == "POST":
-            # 1. Nayi Category save karna
             if 'cat_name' in request.form:
                 name = request.form['cat_name']
                 if name:
                     new_cat = Category(name=name)
                     db.session.add(new_cat)
             
-            # 2. Nayi Subcategory save karna
             if 'subcat_name' in request.form:
                 sub_name = request.form['subcat_name']
                 parent_id = request.form['parent_id']
@@ -83,7 +79,6 @@ def admin_panel():
             db.session.commit()
             return redirect(url_for('admin_panel'))
 
-        # GET request: Admin page dikhana
         categories = Category.query.all()
         return render_template("admin.html", categories=categories)
     except Exception as e:
@@ -103,7 +98,6 @@ def generate_quiz():
         raw_text = response.text.strip().replace('```json', '').replace('```', '')
         quiz_json = json.loads(raw_text)
         
-        # Database mein save karna
         new_quiz = Quiz(topic=topic, question_data=raw_text)
         db.session.add(new_quiz)
         db.session.commit()
@@ -111,6 +105,36 @@ def generate_quiz():
         return jsonify({"status": "success", "quiz": quiz_json})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
+# --- 6. DATA IMPORT ROUTE (SIRF EK BAAR CHALANA HAI) ---
+@app.route("/import_my_data")
+def import_data():
+    try:
+        # 1. Purani Categories banana
+        subjects = ["History", "Geography", "Polity", "Economics", "Current Affairs"]
+        for sub in subjects:
+            if not Category.query.filter_by(name=sub).first():
+                db.session.add(Category(name=sub))
+        db.session.commit()
+
+        # 2. History mein ek sample post add karna
+        history = Category.query.filter_by(name="History").first()
+        if history:
+            # Check if subcategory already exists
+            sub = SubCategory.query.filter_by(name="Ancient India", category_id=history.id).first()
+            if not sub:
+                sub = SubCategory(name="Ancient India", category_id=history.id)
+                db.session.add(sub)
+                db.session.commit()
+            
+            # Add sample post
+            p = Post(title="Indus Valley Civilization", content="Indus Valley Civilization notes by Vikas Ji.", sub_category_id=sub.id)
+            db.session.add(p)
+            db.session.commit()
+            
+        return "Mubarak ho! Purana data naye system mein shift ho gaya hai. Ab Home page check karein."
+    except Exception as e:
+        return f"Import Error: {str(e)}"
 
 if __name__ == "__main__":
     app.run(debug=True)
