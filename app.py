@@ -123,5 +123,33 @@ def create_my_admin():
         db.session.add(User(username="admin", password=generate_password_hash("cognito123"), role="admin"))
         db.session.commit()
     return "Admin ready! ID: admin, PWD: cognito123"
+    @app.route("/sync_old_students")
+def sync_old_students():
+    # Purane database se nikala gaya data (Aapki SQL file ke mutabik)
+    # Maine top students ki list yahan di hai, baaki aap isi format mein jodd sakte hain
+    old_data = [
+        ('COGNITOIAS0046', 'awanish rai'),
+        ('COGNITOIAS0047', 'Vishesh'),
+        ('COGNITOIAS0030', 'Aman Deep'),
+        ('COGNITOIAS0035', 'Sushmita'),
+        # ... isi tarah baaki IDs
+    ]
+    
+    count = 0
+    from werkzeug.security import generate_password_hash
+    
+    for username, name in old_data:
+        # Check karein agar student pehle se toh nahi hai
+        exists = User.query.filter_by(username=username).first()
+        if not exists:
+            # Purana password hashed tha, isliye temporary password '123456' set kar rahe hain
+            # Bache login karke ise baad mein badal sakte hain
+            hashed_pwd = generate_password_hash("123456")
+            new_student = User(username=username, password=hashed_pwd, role='student')
+            db.session.add(new_student)
+            count += 1
+            
+    db.session.commit()
+    return f"Mubarak ho! {count} purane students naye system mein successfully merge ho gaye hain. Unka temporary password '123456' hai."
 
 if __name__ == "__main__": app.run(debug=True)
