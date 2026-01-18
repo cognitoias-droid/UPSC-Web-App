@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "cognito_secret_key_2026" # Session secure karne ke liye
+app.secret_key = "cognito_secret_key_2026"
 
 # --- 1. DATABASE CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -30,13 +30,11 @@ if api_key:
         print(f"DEBUG: AI Setup Error: {e}")
 
 # --- 3. DATABASE MODELS ---
-
-# User Table: ID/Password aur Roles ke liye
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False) # Aapki generated ID
+    username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(10), default='student') # 'admin' ya 'student'
+    role = db.Column(db.String(10), default='student')
 
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,7 +57,7 @@ class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     topic = db.Column(db.String(100))
     question_data = db.Column(db.Text) 
-    time_limit = db.Column(db.Integer, default=10) # Minutes mein
+    time_limit = db.Column(db.Integer, default=10)
     neg_marking = db.Column(db.Float, default=0.33)
     num_questions = db.Column(db.Integer, default=5)
 
@@ -75,7 +73,6 @@ def home():
     categories = Category.query.all()
     return render_template("home.html", categories=categories)
 
-# --- LOGIN/LOGOUT LOGIC ---
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -85,6 +82,7 @@ def login():
         if user and check_password_hash(user.password, pwd):
             session['user_id'] = user.id
             session['role'] = user.role
+            session['username'] = user.username
             return redirect(url_for('home'))
         return "Invalid ID or Password!"
     return render_template("login.html")
@@ -94,16 +92,23 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# --- ADMIN PANEL ---
+# --- ADMIN PANEL (UPDATED) ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin_panel():
-    # Security: Sirf Admin hi dekh sake
     if session.get('role') != 'admin':
-        return "Access Denied! Sirf Admin hi yahan ja sakta hai."
+        return redirect(url_for('login'))
 
     try:
         if request.method == "POST":
-            # 1. Study Material
+            # 1. Subject (Category) Add Karna
+            if 'cat_name' in request.form:
+                db.session.add(Category(name=request.form['cat_name']))
+            
+            # 2. Topic (Sub-Category) Add Karna
+            if 'subcat_name' in request.form:
+                db.session.add(SubCategory(name=request.form['subcat_name'], category_id=request.form['parent_id']))
+
+            # 3. Study Material (Post)
             if 'post_title' in request.form:
                 new_post = Post(
                     title=request.form['post_title'], 
@@ -112,7 +117,7 @@ def admin_panel():
                 )
                 db.session.add(new_post)
             
-            # 2. Quiz Configuration
+            # 4. Quiz Settings
             if 'quiz_topic' in request.form:
                 new_quiz = Quiz(
                     topic=request.form['quiz_topic'],
@@ -122,7 +127,7 @@ def admin_panel():
                 )
                 db.session.add(new_quiz)
 
-            # 3. User Generation (New Student ID)
+            # 5. Student Register
             if 'new_student_id' in request.form:
                 sid = request.form['new_student_id']
                 spwd = generate_password_hash(request.form['new_pwd'])
@@ -137,7 +142,7 @@ def admin_panel():
     except Exception as e:
         return f"Admin Panel Error: {str(e)}"
 
-# --- QUIZ GENERATION ---
+# --- AI QUIZ ---
 @app.route("/generate_quiz", methods=["POST"])
 def generate_quiz():
     if not ai_model:
@@ -154,6 +159,9 @@ def generate_quiz():
         raw_text = response.text.strip()
         if "```json" in raw_text:
             raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_text:
+            raw_text = raw_text.split("```")[1].split("```")[0].strip()
+            
         quiz_json = json.loads(raw_text)
         return jsonify({"status": "success", "quiz": quiz_json})
     except Exception as e:
@@ -172,20 +180,20 @@ def view_post(post_id):
 
 @app.route("/take_test/<int:quiz_id>")
 def take_test(quiz_id):
-    # Yahan humne naya test interface joda hai
     quiz = Quiz.query.get_or_404(quiz_id)
     return render_template("test_interface.html", quiz=quiz)
+
+# --- INITIAL SETUP ROUTE ---
 @app.route("/create_my_admin")
 def create_my_admin():
-    # Check karein agar admin pehle se hai
     existing = User.query.filter_by(username="admin").first()
     if not existing:
-        hashed_pwd = generate_password_hash("cognito123") # Aapka password
+        hashed_pwd = generate_password_hash("cognito123")
         new_admin = User(username="admin", password=hashed_pwd, role="admin")
         db.session.add(new_admin)
         db.session.commit()
-        return "Mubarak ho! Admin ID: 'admin' aur Password: 'cognito123' set ho gaya hai. Ab login karein."
+        return "Mubarak ho! ID: 'admin', PWD: 'cognito123' set ho gaya hai."
     return "Admin pehle se bana hua hai."
-    
+
 if __name__ == "__main__":
     app.run(debug=True)
