@@ -5,111 +5,128 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cognito IAS - Master Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <script src="https://cdn.ckeditor.com/4.19.1/standard/ckeditor.js"></script>
 
     <style>
+        :root { --primary: #2c3e50; --blue: #3498db; --green: #27ae60; --orange: #e67e22; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; display: flex; }
-        .sidebar { width: 250px; background: #2c3e50; height: 100vh; position: fixed; color: white; padding: 20px; }
-        .main-content { margin-left: 250px; padding: 40px; width: 100%; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; border-top: 5px solid #3498db; }
-        h2 { color: #2c3e50; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn { background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn-green { background: #27ae60; }
-        .btn-orange { background: #e67e22; }
+        .sidebar { width: 260px; background: var(--primary); height: 100vh; position: fixed; color: white; padding: 20px; box-sizing: border-box; }
+        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 30px; border-top: 5px solid var(--blue); }
+        .sidebar h2 { color: var(--blue); margin-bottom: 30px; }
+        .sidebar a { display: block; color: #bdc3c7; text-decoration: none; margin: 15px 0; transition: 0.3s; }
+        .sidebar a:hover { color: white; transform: translateX(5px); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .btn { border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; width: 100%; transition: 0.3s; }
+        .btn-blue { background: var(--blue); }
+        .btn-green { background: var(--green); }
+        .btn-orange { background: var(--orange); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background: #f8f9fa; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>Cognito Admin</h2>
-    <p><i class="fas fa-user-plus"></i> Student Manager</p>
-    <p><i class="fas fa-file-alt"></i> Material Editor</p>
-    <p><i class="fas fa-question-circle"></i> Question Bank</p>
+    <a href="#students"><i class="fas fa-users"></i> Student Manager</a>
+    <a href="#material"><i class="fas fa-book"></i> Study Material</a>
+    <a href="#quiz"><i class="fas fa-stopwatch"></i> Quiz & Timer</a>
+    <a href="#structure"><i class="fas fa-sitemap"></i> Subject Structure</a>
     <hr>
-    <a href="/" style="color: white; text-decoration: none;"><i class="fas fa-eye"></i> View Site</a>
+    <a href="/"><i class="fas fa-home"></i> View Website</a>
 </div>
 
 <div class="main-content">
-    <h1>Master Dashboard</h1>
+    <h1>Master Admin Control</h1>
 
-    <div class="card" style="border-top-color: #27ae60;">
-        <h2><i class="fas fa-user-plus"></i> Naya Student Add Karein</h2>
-        <form method="POST">
-            <div class="form-group">
-                <label>Student ID (e.g. COGNITO001)</label>
-                <input type="text" name="new_student_id" required>
-            </div>
-            <div class="form-group">
-                <label>Set Password</label>
-                <input type="password" name="new_pwd" required>
-            </div>
-            <button type="submit" class="btn btn-green">Add Student Now</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <h2><i class="fas fa-pen-nib"></i> Study Material Publish Karein</h2>
-        <form method="POST">
-            <div class="form-group">
-                <label>Material Title</label>
-                <input type="text" name="post_title" required>
-            </div>
-            <div class="form-group">
-                <label>Sub-Category</label>
-                <select name="sub_id">
-                    {% for sub in subcategories %}
-                    <option value="{{ sub.id }}">{{ sub.parent_category.name }} -> {{ sub.name }}</option>
+    <div id="structure" class="card" style="border-top-color: var(--green);">
+        <h2><i class="fas fa-folder-plus"></i> Category & Topics Jodein</h2>
+        <div class="grid-2">
+            <form method="POST">
+                <label>Nayi Category (Subject)</label>
+                <input type="text" name="cat_name" placeholder="History, Geography..." required>
+                <button type="submit" class="btn btn-green" style="margin-top:10px;">Add Subject</button>
+            </form>
+            <form method="POST">
+                <label>Nayi Sub-Category (Topic)</label>
+                <select name="parent_id">
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
                     {% endfor %}
                 </select>
+                <input type="text" name="subcat_name" placeholder="Maurya, Rivers..." required style="margin-top:10px;">
+                <button type="submit" class="btn btn-green" style="margin-top:10px;">Add Topic</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="students" class="card">
+        <h2><i class="fas fa-user-plus"></i> Student Manager</h2>
+        <form method="POST">
+            <div class="grid-2">
+                <input type="text" name="new_student_id" placeholder="Student ID (COGNITO001)" required>
+                <input type="password" name="new_pwd" placeholder="Password" required>
             </div>
-            <div class="form-group">
-                <label>Content</label>
-                <textarea name="post_content" id="editor_fixed"></textarea>
+            <button type="submit" class="btn btn-blue" style="margin-top:10px;">Register Student</button>
+        </form>
+        <h3>Registered Students</h3>
+        <table>
+            <tr><th>ID (Username)</th><th>Role</th><th>Action</th></tr>
+            {% for user in students %}
+            <tr><td>{{ user.username }}</td><td>{{ user.role }}</td><td><button class="btn btn-orange" style="width:auto; padding:5px 10px;">Reset</button></td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div id="quiz" class="card" style="border-top-color: var(--orange);">
+        <h2><i class="fas fa-question-circle"></i> Manual Question & Timer Settings</h2>
+        <form method="POST">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Timer (Minutes)</label>
+                    <input type="number" name="t_limit" value="10">
+                </div>
+                <div class="form-group">
+                    <label>Negative Marking</label>
+                    <input type="number" step="0.01" name="n_marking" value="0.33">
+                </div>
             </div>
-            <button type="submit" class="btn">Publish Notes</button>
+            <hr>
+            <label>Question Statement (UPSC Style)</label>
+            <textarea name="q_text" rows="4" placeholder="1. Statement one... \n2. Statement two..."></textarea>
+            <div class="grid-2" style="margin-top:10px;">
+                <input type="text" name="opt_a" placeholder="Option A">
+                <input type="text" name="opt_b" placeholder="Option B">
+                <input type="text" name="opt_c" placeholder="Option C">
+                <input type="text" name="opt_d" placeholder="Option D">
+            </div>
+            <label style="margin-top:10px;">Correct Answer (A, B, C, or D)</label>
+            <input type="text" name="q_ans" maxlength="1">
+            <button type="submit" class="btn btn-orange" style="margin-top:15px;">Save Question to Database</button>
         </form>
     </div>
 
-    <div class="card" style="border-top-color: #e67e22;">
-        <h2><i class="fas fa-plus-square"></i> Manual Question Daalein</h2>
+    <div id="material" class="card">
+        <h2><i class="fas fa-edit"></i> Material Editor</h2>
         <form method="POST">
-            <input type="hidden" name="form_type" value="manual_question">
-            <div class="form-group">
-                <label>Select Test Topic</label>
-                <input type="text" name="q_topic" placeholder="e.g. Modern History Test 1">
-            </div>
-            <div class="form-group">
-                <label>Question Text</label>
-                <textarea name="q_text" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Options (Alag-Alag likhein)</label>
-                <input type="text" name="opt_a" placeholder="Option A" style="margin-bottom:5px;">
-                <input type="text" name="opt_b" placeholder="Option B" style="margin-bottom:5px;">
-                <input type="text" name="opt_c" placeholder="Option C" style="margin-bottom:5px;">
-                <input type="text" name="opt_d" placeholder="Option D">
-            </div>
-            <div class="form-group">
-                <label>Correct Answer (A, B, C, ya D)</label>
-                <input type="text" name="q_ans" maxlength="1">
-            </div>
-            <button type="submit" class="btn btn-orange">Save Question to Bank</button>
+            <input type="text" name="post_title" placeholder="Title..." required style="margin-bottom:15px;">
+            <select name="sub_id" style="margin-bottom:15px;">
+                {% for sub in subcategories %}
+                <option value="{{ sub.id }}">{{ sub.parent_category.name }} -> {{ sub.name }}</option>
+                {% endfor %}
+            </select>
+            <textarea name="post_content" id="editor_fixed"></textarea>
+            <button type="submit" class="btn btn-blue" style="margin-top:15px;">Publish Notes</button>
         </form>
     </div>
 </div>
 
 <script>
-    // Safe initialization for CKEditor
     window.onload = function() {
         if (typeof CKEDITOR !== 'undefined') {
-            CKEDITOR.replace('editor_fixed', {
-                height: 300,
-                removePlugins: 'easyimage,cloudservices',
-            });
+            CKEDITOR.replace('editor_fixed', { height: 300 });
         }
     };
 </script>
