@@ -71,6 +71,29 @@
         </form>
     </div>
 
+    <div class="card" style="border-top-color: #9b59b6;">
+        <h2><i class="fas fa-edit"></i> Naye Notes Likhein (Post)</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label>Post ka Title</label>
+                <input type="text" name="post_title" placeholder="e.g. Akbar ki Rajput Niti" required>
+            </div>
+            <div class="form-group">
+                <label>Kahan Publish Karein? (Sub-Category)</label>
+                <select name="sub_id" required>
+                    {% for sub in subcategories %}
+                    <option value="{{ sub.id }}">{{ sub.parent_category.name }} -> {{ sub.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Content (Notes Content)</label>
+                <textarea name="post_content" rows="10" placeholder="Yahan detail mein likhein..." required></textarea>
+            </div>
+            <button type="submit" class="btn" style="background: #9b59b6;">Publish Note</button>
+        </form>
+    </div>
+
     <div class="card">
         <h2><i class="fas fa-list"></i> Aapka Current Structure</h2>
         <ul>
@@ -78,7 +101,7 @@
             <li><b>{{ cat.name }}</b>
                 <ul>
                     {% for sub in cat.subcategories %}
-                    <li>{{ sub.name }}</li>
+                    <li>{{ sub.name }} (Posts: {{ sub.posts|length }})</li>
                     {% endfor %}
                 </ul>
             </li>
