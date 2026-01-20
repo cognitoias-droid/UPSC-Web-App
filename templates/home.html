@@ -5,19 +5,13 @@
     <style>
         body { font-family: 'Segoe UI', Arial; padding: 20px; background: #f4f4f4; line-height: 1.6; }
         .mcq-card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
-        /* Options ka Style */
         .option-btn { 
             display: block; width: 100%; text-align: left; padding: 12px; 
             margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; 
             background: #fff; cursor: pointer; transition: 0.3s;
         }
         .option-btn:hover { background: #f0f0f0; border-color: #3498db; }
-
-        /* Explanation initially chhupa rahega */
-        .result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; }
-        .correct { background: #d4edda; color: #155724; border-left: 5px solid #28a745; }
-        
+        .result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid transparent; }
         .show-btn { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
@@ -30,12 +24,13 @@
         <h3>Q: {{ q.q_en }}</h3>
         <p style="color: #666; font-style: italic;">{{ q.q_hi }}</p>
 
-        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'A')">A) {{ q.oa }}</button>
-        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'B')">B) {{ q.ob }}</button>
-        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'C')">C) {{ q.oc }}</button>
-        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'D')">D) {{ q.od }}</button>
+        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'A', '{{ q.ans }}')">A) {{ q.oa }}</button>
+        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'B', '{{ q.ans }}')">B) {{ q.ob }}</button>
+        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'C', '{{ q.ans }}')">C) {{ q.oc }}</button>
+        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'D', '{{ q.ans }}')">D) {{ q.od }}</button>
 
-        <div id="result-{{ q.id }}" class="result-box correct">
+        <div id="result-{{ q.id }}" class="result-box">
+            <div id="status-{{ q.id }}"></div>
             <strong>Correct Answer: {{ q.ans }}</strong><br>
             <p><strong>Explanation:</strong> {{ q.exp }}</p>
         </div>
@@ -46,24 +41,30 @@
 
     <script>
         function checkAns(qId, selected, correct) {
-    // 1. Result box aur Button ko dhoondna
-    var resultBox = document.getElementById("result-" + qId);
-    
-    // 2. Logic: Kya bache ka chuna hua option sahi jawab se milta hai?
-    if (selected === correct) {
-        // Agar sahi hai toh hara (Green) rang aur message
-        resultBox.style.display = "block";
-        resultBox.style.backgroundColor = "#d4edda"; // Light Green
-        resultBox.style.color = "#155724";
-        resultBox.innerHTML = "<b>✅ Sahi Jawab!</b><br>" + resultBox.innerHTML;
-    } else {
-        // Agar galat hai toh laal (Red) rang
-        resultBox.style.display = "block";
-        resultBox.style.backgroundColor = "#f8d7da"; // Light Red
-        resultBox.style.color = "#721c24";
-        resultBox.innerHTML = "<b>❌ Galat Jawab!</b> Sahi jawab " + correct + " hai.<br>" + resultBox.innerHTML;
-    }
-}
+            var resultBox = document.getElementById("result-" + qId);
+            var statusDiv = document.getElementById("status-" + qId);
+            
+            resultBox.style.display = "block";
+            
+            if (selected === correct) {
+                // Sahi Jawab Logic
+                resultBox.style.backgroundColor = "#d4edda"; 
+                resultBox.style.color = "#155724";
+                resultBox.style.borderColor = "#28a745";
+                statusDiv.innerHTML = "<b>✅ Sahi Jawab!</b>";
+            } else {
+                // Galat Jawab Logic
+                resultBox.style.backgroundColor = "#f8d7da"; 
+                resultBox.style.color = "#721c24";
+                resultBox.style.borderColor = "#dc3545";
+                statusDiv.innerHTML = "<b>❌ Galat Jawab!</b> Sahi jawab " + correct + " hai.";
+            }
+        }
+
+        function toggleResult(qId) {
+            var x = document.getElementById("result-" + qId);
+            x.style.display = (x.style.display === "none" || x.style.display === "") ? "block" : "none";
+        }
     </script>
 </body>
 </html>
