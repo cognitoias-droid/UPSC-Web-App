@@ -1,66 +1,48 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Admin - Content Management</title>
-    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
-</head>
-<body style="font-family: Arial; padding: 20px;">
-    <h1>Admin Panel - Phase 2</h1>
-    
-    <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+<head><title>Admin - Cognito IAS</title></head>
+<body style="font-family: Arial; padding: 30px; background: #f0f2f5;">
+    <h1>Admin Dashboard (Logic Tested)</h1>
+
+    <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h3>Add Category</h3>
         <form action="/admin/add_category" method="POST">
-            <input type="text" name="cat_name" placeholder="New Category">
-            <button type="submit">Add Category</button>
+            <input type="text" name="cat_name" placeholder="Category Name" required>
+            <button type="submit">Save</button>
         </form>
     </div>
 
-    <div style="border: 2px solid purple; padding: 20px;">
-        <h3>Add Notes or Videos</h3>
-        <form action="/admin/add_content" method="POST">
-            <select name="sub_id" required>
-                <option value="">Select Sub-category</option>
-                {% for cat in categories %}{% for sub in cat.subcats %}
-                <option value="{{sub.id}}">{{cat.name}} -> {{sub.name}}</option>
-                {% endfor %}{% endfor %}
-            </select><br><br>
+    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 5px solid green;">
+        <h3>Add New MCQ (Bilingual)</h3>
+        <form action="/admin/save_mcq" method="POST">
+            <p>English Question:</p>
+            <textarea name="q_en" style="width: 100%;" rows="3"></textarea>
+            
+            <p>Hindi Question (Optional):</p>
+            <textarea name="q_hi" style="width: 100%;" rows="3"></textarea>
 
-            <input type="text" name="title" id="title" placeholder="Topic Title" style="width: 100%;"><br><br>
-
-            <select name="type" id="content_type" onchange="toggleType(this.value)">
-                <option value="post">Notes (Text)</option>
-                <option value="video">Video (YouTube Link)</option>
-            </select><br><br>
-
-            <div id="text_area">
-                <button type="button" onclick="askAI()" style="background: #8e44ad; color: white;">AI Assist</button>
-                <textarea name="content" id="editor"></textarea>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <input type="text" name="oa" placeholder="Option A" required>
+                <input type="text" name="ob" placeholder="Option B" required>
+                <input type="text" name="oc" placeholder="Option C" required>
+                <input type="text" name="od" placeholder="Option D" required>
             </div>
 
-            <div id="video_area" style="display:none;">
-                <input type="text" name="url" placeholder="Paste YouTube Link">
+            <div style="margin-top: 15px;">
+                <label>Correct Answer:</label>
+                <select name="ans">
+                    <option value="A">A</option><option value="B">B</option>
+                    <option value="C">C</option><option value="D">D</option>
+                </select>
             </div>
-            <br>
-            <button type="submit" style="background: green; color: white; padding: 10px;">Save to Database</button>
+
+            <p>Explanation:</p>
+            <textarea name="exp" style="width: 100%;" rows="2"></textarea>
+
+            <button type="submit" style="background: green; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-top: 15px;">
+                Save MCQ to Database
+            </button>
         </form>
     </div>
-
-    <script>
-        CKEDITOR.replace('editor');
-        function toggleType(val) {
-            document.getElementById('text_area').style.display = (val === 'post') ? 'block' : 'none';
-            document.getElementById('video_area').style.display = (val === 'video') ? 'block' : 'none';
-        }
-        async function askAI() {
-            let topic = document.getElementById('title').value;
-            if(!topic) { alert("Pehle title likhein!"); return; }
-            const res = await fetch('/api/ai_assist', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({topic: topic})
-            });
-            const data = await res.json();
-            CKEDITOR.instances.editor.setData(data.result);
-        }
-    </script>
 </body>
 </html>
