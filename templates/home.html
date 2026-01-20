@@ -1,24 +1,38 @@
 <!DOCTYPE html>
 <html>
-<head><title>Cognito IAS - Home</title></head>
-<body style="font-family: Arial; padding: 20px; background: #f4f4f4;">
-    <h1>Cognito IAS - Student Portal</h1>
+<head>
+    <title>Cognito IAS - Student Portal</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+        .mcq-card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .option { padding: 10px; border: 1px solid #ddd; margin: 5px 0; border-radius: 5px; }
+        .explanation { background: #e8f5e9; padding: 10px; border-left: 5px solid #2e7d32; margin-top: 10px; }
+        .hindi { color: #555; font-style: italic; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Cognito IAS: Practice Questions</h1>
     <hr>
-    <h3>Available Courses/Categories:</h3>
-    
-    <div style="display: flex; gap: 20px;">
-        {% for cat in categories %}
-        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 250px;">
-            <h2 style="color: blue;">{{ cat.name }}</h2>
-            <ul>
-                {% for sub in cat.subcats %}
-                <li>{{ sub.name }}</li>
-                {% else %}
-                <li>No sub-categories yet</li>
-                {% endfor %}
-            </ul>
+
+    {% for q in questions %}
+    <div class="mcq-card">
+        <h3>Q: {{ q.q_en }}</h3>
+        <p class="hindi">अनुवाद: {{ q.q_hi }}</p>
+
+        <div class="option">A) {{ q.oa }}</div>
+        <div class="option">B) {{ q.ob }}</div>
+        <div class="option">C) {{ q.oc }}</div>
+        <div class="option">D) {{ q.od }}</div>
+
+        <p><strong>Correct Answer: {{ q.ans }}</strong></p>
+        <div class="explanation">
+            <strong>Explanation:</strong> {{ q.exp }}
         </div>
-        {% endfor %}
     </div>
+    {% endfor %}
+
+    {% if not questions %}
+        <p>Abhi koi sawal nahi hai. Admin panel se add karein!</p>
+    {% endif %}
 </body>
 </html>
