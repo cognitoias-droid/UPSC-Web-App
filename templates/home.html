@@ -45,21 +45,25 @@
     {% endfor %}
 
     <script>
-        function toggleResult(qId) {
-            // Logic: ID dhoondo aur dikhao ya chhupao
-            var x = document.getElementById("result-" + qId);
-            if (x.style.display === "none" || x.style.display === "") {
-                x.style.display = "block";
-            } else {
-                x.style.display = "none";
-            }
-        }
-
-        function checkAns(qId, selected) {
-            // Filhal hum sirf answer dikha rahe hain click par
-            toggleResult(qId);
-            alert("Aapne Option " + selected + " chuna hai. Sahi jawab neeche dekhein.");
-        }
+        function checkAns(qId, selected, correct) {
+    // 1. Result box aur Button ko dhoondna
+    var resultBox = document.getElementById("result-" + qId);
+    
+    // 2. Logic: Kya bache ka chuna hua option sahi jawab se milta hai?
+    if (selected === correct) {
+        // Agar sahi hai toh hara (Green) rang aur message
+        resultBox.style.display = "block";
+        resultBox.style.backgroundColor = "#d4edda"; // Light Green
+        resultBox.style.color = "#155724";
+        resultBox.innerHTML = "<b>✅ Sahi Jawab!</b><br>" + resultBox.innerHTML;
+    } else {
+        // Agar galat hai toh laal (Red) rang
+        resultBox.style.display = "block";
+        resultBox.style.backgroundColor = "#f8d7da"; // Light Red
+        resultBox.style.color = "#721c24";
+        resultBox.innerHTML = "<b>❌ Galat Jawab!</b> Sahi jawab " + correct + " hai.<br>" + resultBox.innerHTML;
+    }
+}
     </script>
 </body>
 </html>
