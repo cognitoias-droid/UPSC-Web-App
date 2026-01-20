@@ -79,5 +79,12 @@ def add_category():
         db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
+@app.route("/")
+def home():
+    # Database se kaho: "Sare Questions ki list de do"
+    sari_questions = Question.query.all()
+    # In questions ko 'home.html' ko parcel kar do
+    return render_template("home.html", questions=sari_questions))
+
 if __name__ == "__main__":
     app.run(debug=True)
