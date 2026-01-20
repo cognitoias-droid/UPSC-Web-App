@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = "cognito_ias_logic_master"
 
-# Database Path Logic
+# --- CONFIGURATION (Buniyaad) ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v2.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -23,7 +23,6 @@ class SubCategory(db.Model):
     name = db.Column(db.String(100))
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
 
-# NAYA LOGIC: Question ki Almari
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     q_en = db.Column(db.Text)
@@ -35,26 +34,31 @@ class Question(db.Model):
     ans = db.Column(db.String(5))
     exp = db.Column(db.Text)
 
-# --- ROUTES (Raste) ---
+# --- ROUTES (Raste aur Logic) ---
 
 @app.route("/system_init")
 def system_init():
-    db.create_all() # Sari almariyan ek sath banana
-    return "SUCCESS: Platform Ready!"
+    # Saari purani errors saaf karke naye sire se tables banana
+    db.create_all() 
+    return "SUCCESS: Platform Ready! Ab /admin par jayein."
 
 @app.route("/")
 def home():
-    return render_template("home.html", categories=Category.query.all())
+    # LOGIC: Ek hi function mein Warehouse se dono cheezein nikalna
+    sari_questions = Question.query.all()
+    sari_categories = Category.query.all()
+    
+    # Dono ko 'home.html' wale counter par saja dena
+    return render_template("home.html", questions=sari_questions, categories=sari_categories)
 
 @app.route("/admin")
 def admin_dashboard():
-    # Admin page ko categories ki list chahiye dropdown ke liye
+    # Admin ko categories dikhani hain dropdown ke liye
     return render_template("admin.html", categories=Category.query.all())
 
-# Logic: MCQ Save karne ka function
 @app.route("/admin/save_mcq", methods=["POST"])
 def save_mcq():
-    # Bridge: HTML ke 'name' se data pakadna
+    # Bridge: HTML form se data pakadna
     en = request.form.get("q_en")
     hi = request.form.get("q_hi")
     a = request.form.get("oa")
@@ -70,7 +74,6 @@ def save_mcq():
         db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
-# Purane Category/Subcategory Routes
 @app.route("/admin/add_category", methods=["POST"])
 def add_category():
     name = request.form.get("cat_name")
@@ -78,13 +81,6 @@ def add_category():
         db.session.add(Category(name=name))
         db.session.commit()
     return redirect(url_for('admin_dashboard'))
-
-@app.route("/")
-def home():
-    # Database se kaho: "Sare Questions ki list de do"
-    sari_questions = Question.query.all()
-    # In questions ko 'home.html' ko parcel kar do
-    return render_template("home.html", questions=sari_questions))
 
 if __name__ == "__main__":
     app.run(debug=True)
