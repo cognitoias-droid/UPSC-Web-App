@@ -1,25 +1,18 @@
-import os, json, re
-import google.generativeai as genai
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+import os
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.secret_key = "cognito_ias_v2_final"
+app.secret_key = "cognito_ias_logic_master"
 
-# Database Configuration
+# Database Path Logic
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_basic.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v2.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# AI Setup (Gemini)
-api_key = os.environ.get("GEMINI_API_KEY")
-ai_model = None
-if api_key:
-    genai.configure(api_key=api_key)
-    ai_model = genai.GenerativeModel('gemini-pro')
+# --- MODELS (Almariyan) ---
 
-# Models (Kadi: Category -> Subcat -> Post/Video)
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True)
@@ -29,37 +22,55 @@ class SubCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    posts = db.relationship('Post', backref='subcat', lazy=True)
-    videos = db.relationship('Video', backref='subcat', lazy=True)
 
-class Post(db.Model):
+# NAYA LOGIC: Question ki Almari
+class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200))
-    content = db.Column(db.Text)
-    subcat_id = db.Column(db.Integer, db.ForeignKey('sub_category.id'))
+    q_en = db.Column(db.Text)
+    q_hi = db.Column(db.Text)
+    oa = db.Column(db.String(200))
+    ob = db.Column(db.String(200))
+    oc = db.Column(db.String(200))
+    od = db.Column(db.String(200))
+    ans = db.Column(db.String(5))
+    exp = db.Column(db.Text)
 
-class Video(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200))
-    url = db.Column(db.String(500))
-    subcat_id = db.Column(db.Integer, db.ForeignKey('sub_category.id'))
+# --- ROUTES (Raste) ---
 
-# Routes
 @app.route("/system_init")
 def system_init():
-    db.create_all()
-    return "SUCCESS: Phase 2 Ready! Buniyaad taiyar hai."
+    db.create_all() # Sari almariyan ek sath banana
+    return "SUCCESS: Platform Ready!"
 
 @app.route("/")
 def home():
-    all_categories = Category.query.all()
-    return render_template("home.html", categories=all_categories)
+    return render_template("home.html", categories=Category.query.all())
 
 @app.route("/admin")
 def admin_dashboard():
-    all_categories = Category.query.all()
-    return render_template("admin.html", categories=all_categories)
+    # Admin page ko categories ki list chahiye dropdown ke liye
+    return render_template("admin.html", categories=Category.query.all())
 
+# Logic: MCQ Save karne ka function
+@app.route("/admin/save_mcq", methods=["POST"])
+def save_mcq():
+    # Bridge: HTML ke 'name' se data pakadna
+    en = request.form.get("q_en")
+    hi = request.form.get("q_hi")
+    a = request.form.get("oa")
+    b = request.form.get("ob")
+    c = request.form.get("oc")
+    d = request.form.get("od")
+    correct = request.form.get("ans")
+    explanation = request.form.get("exp")
+
+    if en:
+        new_q = Question(q_en=en, q_hi=hi, oa=a, ob=b, oc=c, od=d, ans=correct, exp=explanation)
+        db.session.add(new_q)
+        db.session.commit()
+    return redirect(url_for('admin_dashboard'))
+
+# Purane Category/Subcategory Routes
 @app.route("/admin/add_category", methods=["POST"])
 def add_category():
     name = request.form.get("cat_name")
@@ -67,35 +78,6 @@ def add_category():
         db.session.add(Category(name=name))
         db.session.commit()
     return redirect(url_for('admin_dashboard'))
-
-@app.route("/admin/add_subcategory", methods=["POST"])
-def add_subcategory():
-    # Fix: Syntax Error sudhara gaya (Line 68)
-    name = request.form.get("sub_name")
-    pid = request.form.get("parent_id")
-    if name and pid:
-        db.session.add(SubCategory(name=name, category_id=pid))
-        db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-@app.route("/admin/add_content", methods=["POST"])
-def add_content():
-    f = request.form
-    if f.get('type') == 'post':
-        db.session.add(Post(title=f.get('title'), content=f.get('content'), subcat_id=f.get('sub_id')))
-    else:
-        db.session.add(Video(title=f.get('title'), url=f.get('url'), subcat_id=f.get('sub_id')))
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-@app.route("/api/ai_assist", methods=["POST"])
-def ai_assist():
-    if not ai_model:
-        return jsonify({"error": "AI Config Missing"}), 500
-    topic = request.json.get("topic")
-    prompt = f"Write UPSC study notes on {topic}. Use HTML tags like <h3> and <ul>. Bilingual Hindi/English."
-    response = ai_model.generate_content(prompt)
-    return jsonify({"result": response.text})
 
 if __name__ == "__main__":
     app.run(debug=True)
