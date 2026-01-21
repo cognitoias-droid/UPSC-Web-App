@@ -7,9 +7,13 @@ app.secret_key = "cognito_ias_logic_master"
 
 # --- CONFIGURATION (Buniyaad) ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v2.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+# Naya Logic: External Database se judna
+# Agar Render par DATABASE_URL milta hai toh wo use karega, nahi toh purana sqlite
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v2.db'))
+
+# Agar URL 'postgres://' se shuru ho raha hai toh use 'postgresql://' mein badalna padta hai (Render ki requirement)
+if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://"):
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace("postgres://", "postgresql://", 1)
 
 # --- MODELS (Almariyan) ---
 
