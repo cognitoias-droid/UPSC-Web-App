@@ -7,15 +7,26 @@ app.secret_key = "cognito_ias_logic_master"
 
 # --- CONFIGURATION (Buniyaad) ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Naya Logic: External Database se judna
-# Agar Render par DATABASE_URL milta hai toh wo use karega, nahi toh purana sqlite
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v2.db'))
 
-# Agar URL 'postgres://' se shuru ho raha hai toh use 'postgresql://' mein badalna padta hai (Render ki requirement)
-if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://"):
-    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace("postgres://", "postgresql://", 1)
+# Logic: External Database (PostgreSQL) ya SQLite
+# Pehle check karein ki kya Render ne DATABASE_URL di hai
+db_url = os.environ.get('DATABASE_URL')
 
-# --- MODELS (Almariyan) ---
+if db_url:
+    # Render ki 'postgres://' ko 'postgresql://' mein badalna padta hai
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+else:
+    # Agar local chala rahe hain toh SQLite use hoga
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v2.db')
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# SABSE ZARURI: db ko define karna (Iske bina Error aati hai)
+db = SQLAlchemy(app)
+
+# --- MODELS (Almariyan/Registers) ---
 
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,27 +53,22 @@ class Question(db.Model):
 
 @app.route("/system_init")
 def system_init():
-    # Saari purani errors saaf karke naye sire se tables banana
+    # Nayi Tijori (PostgreSQL) mein tables banane ke liye
     db.create_all() 
-    return "SUCCESS: Platform Ready! Ab /admin par jayein."
+    return "SUCCESS: Tijori taiyar hai! Ab data safe rahega."
 
 @app.route("/")
 def home():
-    # LOGIC: Ek hi function mein Warehouse se dono cheezein nikalna
     sari_questions = Question.query.all()
     sari_categories = Category.query.all()
-    
-    # Dono ko 'home.html' wale counter par saja dena
     return render_template("home.html", questions=sari_questions, categories=sari_categories)
 
 @app.route("/admin")
 def admin_dashboard():
-    # Admin ko categories dikhani hain dropdown ke liye
     return render_template("admin.html", categories=Category.query.all())
 
 @app.route("/admin/save_mcq", methods=["POST"])
 def save_mcq():
-    # Bridge: HTML form se data pakadna
     en = request.form.get("q_en")
     hi = request.form.get("q_hi")
     a = request.form.get("oa")
