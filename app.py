@@ -10,18 +10,20 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Logic: External Database (PostgreSQL) ya SQLite
 # Pehle check karein ki kya Render ne DATABASE_URL di hai
+# --- CONFIGURATION (Sahi Logic) ---
 db_url = os.environ.get('DATABASE_URL')
 
 if db_url:
-    # Render ki 'postgres://' ko 'postgresql://' mein badalna padta hai
+    # Render ki 'postgres://' ko 'postgresql://' mein badalna zaruri hai
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 else:
-    # Agar local chala rahe hain toh SQLite use hoga
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'cognito_v2.db')
+    # Local testing ke liye (Render par ye line nahi chalni chahiye)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cognito_v2.db'
 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Ye line bohot zaruri hai Render ke liye
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {"pool_pre_ping": True}
 
 # SABSE ZARURI: db ko define karna (Iske bina Error aati hai)
 db = SQLAlchemy(app)
