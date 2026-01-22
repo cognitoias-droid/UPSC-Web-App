@@ -64,20 +64,33 @@ function askAI() {
     })
     .then(res => res.json())
     .then(data => {
-        // Yeh line-ein aapke form ke dabbo ko apne aap bhar dengi
-        document.getElementsByName('q_en')[0].value = data.q_en;
-        document.getElementsByName('q_hi')[0].value = data.q_hi;
-        document.getElementsByName('oa')[0].value = data.oa;
-        document.getElementsByName('ob')[0].value = data.ob;
-        document.getElementsByName('oc')[0].value = data.oc;
-        document.getElementsByName('od')[0].value = data.od;
-        document.getElementsByName('ans')[0].value = data.ans;
-        document.getElementsByName('exp')[0].value = data.exp;
+        console.log("AI Raw Data:", data);
+
+        // LOGIC: Agar keys alag naam se aayein, toh bhi ye dhoond lega
+        const questionEn = data.q_en || data.question_en || data.question || "";
+        const questionHi = data.q_hi || data.question_hi || "";
+        const optionA = data.oa || data.option_a || data.a || "";
+        const optionB = data.ob || data.option_b || data.b || "";
+        const optionC = data.oc || data.option_c || data.c || "";
+        const optionD = data.od || data.option_d || data.d || "";
+        const correctAns = data.ans || data.correct || data.answer || "A";
+        const explain = data.exp || data.explanation || "";
+
+        // Form ke dabbo mein sahi data bharna
+        document.getElementsByName('q_en')[0].value = questionEn;
+        document.getElementsByName('q_hi')[0].value = questionHi;
+        document.getElementsByName('oa')[0].value = optionA;
+        document.getElementsByName('ob')[0].value = optionB;
+        document.getElementsByName('oc')[0].value = optionC;
+        document.getElementsByName('od')[0].value = optionD;
+        document.getElementsByName('ans')[0].value = correctAns;
+        document.getElementsByName('exp')[0].value = explain;
         
         btn.innerText = "Generate Question";
         btn.disabled = false;
     })
     .catch(err => {
+        console.error("Error:", err);
         alert("Galti hui: " + err);
         btn.innerText = "Generate Question";
         btn.disabled = false;
