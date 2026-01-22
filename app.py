@@ -27,7 +27,68 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {"pool_pre_ping": True}
 
 # SABSE ZARURI: db ko define karna (Iske bina Error aati hai)
 db = SQLAlchemy(app)
+# Gemini AI Setup with Smart Auto-Selection
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
+def get_best_model():
+    try:
+        # Aapke account mein available models ki list check karna
+        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        # Priority list: Jo pehle mil jaye wahi use karein
+        priority = ['models/gemini-2.0-flash-exp', 'models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-pro']
+        
+        for p in priority:
+            if p in available_models:
+                print(f"DEBUG: Selected Model -> {p}")
+                return genai.GenerativeModel(p)
+        
+        # Agar kuch na mile toh default pehla model utha lo
+        return genai.GenerativeModel(available_models[0])
+    except Exception as e:
+        print(f"Error finding model: {e}")
+        return genai.GenerativeModel('gemini-1.5-flash') # Fallback
+
+# Model ko initialize karein
+ai_model = get_best_model()
+
+# Naya Rasta: AI se sawal mangwane ke liye (JSON format pakka karne ke saath)
+@app.route("/admin/generate_ai", methods=["POST"])
+def generate_ai():
+    try:
+        topic = request.json.get("topic")
+        
+        # Hum AI ko bahut sakhti se bolenge ki sirf JSON de
+        prompt = f"""
+        Topic: {topic}
+        Task: Create 1 UPSC Level MCQ.
+        Format: Return ONLY a valid JSON object. No extra text, no markdown.
+        JSON Structure:
+        {{
+            "q_en": "Question in English",
+            "q_hi": "Question in Hindi",
+            "oa": "Option A",
+            "ob": "Option B",
+            "oc": "Option C",
+            "od": "Option D",
+            "ans": "Correct Option Letter (A/B/C/D)",
+            "exp": "Detailed explanation in Hindi"
+        }}
+        """
+        
+        response = ai_model.generate_content(prompt)
+        
+        # Kuch models ```json ... ``` lagate hain, use saaf karna
+        clean_text = response.text.strip()
+        if "```json" in clean_text:
+            clean_text = clean_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in clean_text:
+            clean_text = clean_text.split("```")[1].split("```")[0].strip()
+            
+        return jsonify(json.loads(clean_text))
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 # --- MODELS (Almariyan/Registers) ---
 
 class Category(db.Model):
