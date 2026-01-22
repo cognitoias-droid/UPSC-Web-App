@@ -13,6 +13,8 @@
         .option-btn:hover { background: #f0f0f0; border-color: #3498db; }
         .result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid transparent; }
         .show-btn { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        /* Image formatting if any */
+        img { max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -21,8 +23,8 @@
 
     {% for q in questions %}
     <div class="mcq-card">
-        <h3>Q: {{ q.q_en }}</h3>
-        <p style="color: #666; font-style: italic;">{{ q.q_hi }}</p>
+        <h3>Q: {{ q.q_en | safe }}</h3>
+        <p style="color: #666; font-style: italic;">{{ q.q_hi | safe }}</p>
 
         <button class="option-btn" onclick="checkAns('{{ q.id }}', 'A', '{{ q.ans }}')">A) {{ q.oa }}</button>
         <button class="option-btn" onclick="checkAns('{{ q.id }}', 'B', '{{ q.ans }}')">B) {{ q.ob }}</button>
@@ -32,7 +34,7 @@
         <div id="result-{{ q.id }}" class="result-box">
             <div id="status-{{ q.id }}"></div>
             <strong>Correct Answer: {{ q.ans }}</strong><br>
-            <p><strong>Explanation:</strong> {{ q.exp }}</p>
+            <p><strong>Explanation:</strong> {{ q.exp | safe }}</p>
         </div>
 
         <button class="show-btn" onclick="toggleResult('{{ q.id }}')">Show/Hide Answer</button>
@@ -47,13 +49,11 @@
             resultBox.style.display = "block";
             
             if (selected === correct) {
-                // Sahi Jawab Logic
                 resultBox.style.backgroundColor = "#d4edda"; 
                 resultBox.style.color = "#155724";
                 resultBox.style.borderColor = "#28a745";
                 statusDiv.innerHTML = "<b>✅ Sahi Jawab!</b>";
             } else {
-                // Galat Jawab Logic
                 resultBox.style.backgroundColor = "#f8d7da"; 
                 resultBox.style.color = "#721c24";
                 resultBox.style.borderColor = "#dc3545";
