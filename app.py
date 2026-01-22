@@ -8,10 +8,10 @@ app = Flask(__name__)
 app.secret_key = "cognito_ias_logic_master"
 
 # --- CONFIGURATION (Buniyaad) ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_url = os.environ.get('DATABASE_URL')
 
 if db_url:
+    # Render ki 'postgres://' ko 'postgresql://' mein badalna
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
@@ -23,52 +23,64 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# --- GEMINI AI SETUP (Smart Selection) ---
+# --- GEMINI AI SETUP (Quota Friendly Logic) ---
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_best_model():
     try:
+        # Priority: 1.5-flash ko pehle rakha hai kyunki iska free quota sabse zyada hai
+        priority = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-2.0-flash-exp']
         available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        priority = ['models/gemini-2.0-flash-exp', 'models/gemini-1.5-flash', 'models/gemini-pro']
+        
         for p in priority:
             if p in available_models:
+                print(f"DEBUG: Using Model -> {p}")
                 return genai.GenerativeModel(p)
-        return genai.GenerativeModel(available_models[0])
+        return genai.GenerativeModel('gemini-1.5-flash')
     except Exception as e:
         print(f"Model selection error: {e}")
         return genai.GenerativeModel('gemini-1.5-flash')
 
 ai_model = get_best_model()
 
-# --- AI GENERATION ROUTE (Bulletproof Logic) ---
+# --- AI GENERATION ROUTE ---
 @app.route("/admin/generate_ai", methods=["POST"])
 def generate_ai():
     try:
         topic = request.json.get("topic")
         
-        # Strict Prompt: AI ko batana ki sirf JSON de
         prompt = f"""
-        Topic: {topic}
-        Task: Create 1 UPSC Level MCQ. 
+        Task: Create 1 UPSC Level MCQ on {topic}. 
         Format: Return ONLY a valid JSON object. No extra text, no markdown.
-        Keys: "q_en", "q_hi", "oa", "ob", "oc", "od", "ans", "exp"
+        Structure: {{
+            "q_en": "Question in English",
+            "q_hi": "Question in Hindi",
+            "oa": "Option A",
+            "ob": "Option B",
+            "oc": "Option C",
+            "od": "Option D",
+            "ans": "Correct Letter A/B/C/D",
+            "exp": "Detailed explanation in Hindi"
+        }}
         """
         
         response = ai_model.generate_content(prompt)
         raw_text = response.text.strip()
         
-        # LOGIC: Agar AI ```json bhej de toh sirf { } ke beech ka data nikalna
+        # Safe JSON Extraction logic
         if "{" in raw_text:
-            start_index = raw_text.find("{")
-            end_index = raw_text.rfind("}") + 1
-            clean_json_str = raw_text[start_index:end_index]
-            data = json.loads(clean_json_str)
+            start = raw_text.find("{")
+            end = raw_text.rfind("}") + 1
+            data = json.loads(raw_text[start:end])
             return jsonify(data)
         else:
-            return jsonify({"error": "Invalid AI response format"}), 500
+            return jsonify({"error": "AI response was not in JSON format"}), 500
             
     except Exception as e:
         print(f"DEBUG ERROR: {str(e)}")
+        # User ko quota error ki jaankari dena
+        if "429" in str(e):
+            return jsonify({"error": "AI Quota Full: Please try again in 1 minute."}), 429
         return jsonify({"error": str(e)}), 500
 
 # --- MODELS (Almariyan) ---
@@ -96,7 +108,7 @@ class Question(db.Model):
 # --- ROUTES ---
 @app.route("/system_init")
 def system_init():
-    db.create_all() # PostgreSQL mein tables banana
+    db.create_all() # PostgreSQL tables setup
     return "SUCCESS: Tijori taiyar hai!"
 
 @app.route("/")
@@ -120,7 +132,7 @@ def save_mcq():
         exp=request.form.get("exp")
     )
     db.session.add(new_q)
-    db.session.commit() # Data permanent save karna
+    db.session.commit() # Permanent save
     return redirect(url_for('admin_dashboard'))
 
 @app.route("/admin/add_category", methods=["POST"])
