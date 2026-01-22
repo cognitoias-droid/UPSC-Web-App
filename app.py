@@ -1,7 +1,8 @@
 import os
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-
+import google.generativeai as genai
+import json
 app = Flask(__name__)
 app.secret_key = "cognito_ias_logic_master"
 
