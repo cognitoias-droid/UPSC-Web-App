@@ -11,7 +11,11 @@
             <button type="submit">Save</button>
         </form>
     </div>
-
+    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1976d2;">
+    <h4 style="margin-top:0;">✨ AI Magic Generator</h4>
+    <input type="text" id="ai-topic" placeholder="Topic likhein (e.g. Fundamental Rights)" style="width: 60%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+    <button type="button" onclick="askAI()" id="ai-btn" style="padding: 8px 15px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">Generate Question</button>
+</div>
     <div style="background: white; padding: 20px; border-radius: 8px; border-left: 5px solid green;">
         <h3>Add New MCQ (Bilingual)</h3>
         <form action="/admin/save_mcq" method="POST">
@@ -44,5 +48,41 @@
             </button>
         </form>
     </div>
+    <script>
+function askAI() {
+    let topic = document.getElementById('ai-topic').value;
+    let btn = document.getElementById('ai-btn');
+    if(!topic) return alert("Pehle topic toh likhiye!");
+    
+    btn.innerText = "AI Soch raha hai...";
+    btn.disabled = true;
+    
+    fetch('/admin/generate_ai', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({topic: topic})
+    })
+    .then(res => res.json())
+    .then(data => {
+        // Yeh line-ein aapke form ke dabbo ko apne aap bhar dengi
+        document.getElementsByName('q_en')[0].value = data.q_en;
+        document.getElementsByName('q_hi')[0].value = data.q_hi;
+        document.getElementsByName('oa')[0].value = data.oa;
+        document.getElementsByName('ob')[0].value = data.ob;
+        document.getElementsByName('oc')[0].value = data.oc;
+        document.getElementsByName('od')[0].value = data.od;
+        document.getElementsByName('ans')[0].value = data.ans;
+        document.getElementsByName('exp')[0].value = data.exp;
+        
+        btn.innerText = "Generate Question";
+        btn.disabled = false;
+    })
+    .catch(err => {
+        alert("Galti hui: " + err);
+        btn.innerText = "Generate Question";
+        btn.disabled = false;
+    });
+}
+</script>
 </body>
 </html>
