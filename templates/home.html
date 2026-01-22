@@ -5,6 +5,12 @@
     <style>
         body { font-family: 'Segoe UI', Arial; padding: 20px; background: #f4f4f4; line-height: 1.6; }
         .mcq-card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        /* MAGIC CSS: Isse Excel ka 'Enter' website par 'Line Break' ban jayega */
+        .mcq-card h3, .mcq-card p { 
+            white-space: pre-wrap; 
+        }
+
         .option-btn { 
             display: block; width: 100%; text-align: left; padding: 12px; 
             margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; 
@@ -13,7 +19,6 @@
         .option-btn:hover { background: #f0f0f0; border-color: #3498db; }
         .result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid transparent; }
         .show-btn { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
-        /* Image formatting if any */
         img { max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }
     </style>
 </head>
