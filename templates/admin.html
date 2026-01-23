@@ -5,7 +5,7 @@
     <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
 </head>
 <body style="font-family: Arial; padding: 30px; background: #f0f2f5;">
-    <h1>Admin Dashboard</h1>
+    <h1>Admin Dashboard - CognitoIAS</h1>
 
     <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ff9800;">
         <h3>📁 Bulk Upload (CSV)</h3>
@@ -16,47 +16,88 @@
         <p style="font-size: 12px; color: #666;">Note: CSV columns: q_en, q_hi, oa, ob, oc, od, ans, exp</p>
     </div>
 
-    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1976d2;">
-        <h4 style="margin-top:0;">✨ AI Magic Generator</h4>
-        <input type="text" id="ai-topic" placeholder="Topic likhein" style="width: 60%; padding: 8px;">
-        <button type="button" onclick="askAI()" id="ai-btn" style="padding: 8px 15px; background: #1976d2; color: white; border: none; cursor: pointer;">Generate</button>
+    <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #7b1fa2;">
+        <h4 style="margin-top:0; color: #7b1fa2;">🚀 AI Bulk Magic (Direct Save)</h4>
+        <p style="font-size: 13px;">Topic likhein aur kitne sawal chahiye wo select karein. Ye seedhe database mein save ho jayenge.</p>
+        <input type="text" id="bulk-topic" placeholder="Topic: e.g. Mauryan Empire, Climate Change" style="width: 50%; padding: 8px;">
+        <input type="number" id="bulk-count" value="5" min="1" max="10" style="width: 50px; padding: 8px;">
+        <button type="button" onclick="generateBulk()" id="bulk-btn" style="padding: 8px 15px; background: #7b1fa2; color: white; border: none; cursor: pointer; border-radius: 4px;">Generate & Save Bulk</button>
+        <div id="bulk-status" style="margin-top: 10px; font-weight: bold; color: #7b1fa2;"></div>
     </div>
 
-    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 5px solid green;">
+    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1976d2;">
+        <h4 style="margin-top:0; color: #1976d2;">✨ AI Quick Draft (Edit before Save)</h4>
+        <input type="text" id="ai-topic" placeholder="Topic likhein" style="width: 60%; padding: 8px;">
+        <button type="button" onclick="askAI()" id="ai-btn" style="padding: 8px 15px; background: #1976d2; color: white; border: none; cursor: pointer; border-radius: 4px;">Generate in Editor</button>
+    </div>
+
+    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 5px solid green; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
         <h3>Add New MCQ (Rich Editor Enabled)</h3>
         <form action="/admin/save_mcq" method="POST">
-            <p>English Question:</p>
+            <p><strong>English Question:</strong></p>
             <textarea name="q_en" id="editor_en"></textarea>
             
-            <p>Hindi Question:</p>
+            <p><strong>Hindi Question:</strong></p>
             <textarea name="q_hi" id="editor_hi"></textarea>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                <input type="text" name="oa" placeholder="Option A" required>
-                <input type="text" name="ob" placeholder="Option B" required>
-                <input type="text" name="oc" placeholder="Option C" required>
-                <input type="text" name="od" placeholder="Option D" required>
+                <input type="text" name="oa" placeholder="Option A" required style="padding: 8px;">
+                <input type="text" name="ob" placeholder="Option B" required style="padding: 8px;">
+                <input type="text" name="oc" placeholder="Option C" required style="padding: 8px;">
+                <input type="text" name="od" placeholder="Option D" required style="padding: 8px;">
             </div>
 
-            <p>Correct Answer:</p>
-            <select name="ans">
+            <p><strong>Correct Answer:</strong></p>
+            <select name="ans" style="padding: 8px; width: 100px;">
                 <option value="A">A</option><option value="B">B</option>
                 <option value="C">C</option><option value="D">D</option>
             </select>
 
-            <p>Explanation:</p>
+            <p><strong>Explanation:</strong></p>
             <textarea name="exp" id="editor_exp"></textarea>
 
-            <button type="submit" style="background: green; color: white; padding: 10px 20px; border: none; margin-top: 15px; cursor: pointer;">Save MCQ</button>
+            <button type="submit" style="background: green; color: white; padding: 12px 25px; border: none; margin-top: 15px; cursor: pointer; border-radius: 4px; font-weight: bold;">Save MCQ To Database</button>
         </form>
     </div>
 
     <script>
-        // CKEditor Ko Activate Karna
+        // CKEditor initialization
         CKEDITOR.replace('editor_en');
         CKEDITOR.replace('editor_hi');
         CKEDITOR.replace('editor_exp');
 
+        // NEW: Function for Bulk AI
+        function generateBulk() {
+            let topic = document.getElementById('bulk-topic').value;
+            let count = document.getElementById('bulk-count').value;
+            let btn = document.getElementById('bulk-btn');
+            let status = document.getElementById('bulk-status');
+
+            if(!topic) return alert("Bulk ke liye topic likhiye!");
+            
+            btn.innerText = "AI Sawal Bana Raha Hai...";
+            btn.disabled = true;
+            status.innerText = "Kripya intezar karein, database mein sawal bhare ja rahe hain...";
+
+            fetch('/admin/bulk_ai', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({topic: topic, count: count})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.message) {
+                    status.innerText = "✅ " + data.message;
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    status.innerText = "❌ Galti: " + data.error;
+                }
+                btn.disabled = false;
+                btn.innerText = "Generate & Save Bulk";
+            });
+        }
+
+        // Original Function for Single AI Draft
         function askAI() {
             let topic = document.getElementById('ai-topic').value;
             let btn = document.getElementById('ai-btn');
@@ -72,8 +113,7 @@
             })
             .then(res => res.json())
             .then(data => {
-                // Editor mein data bharne ka tareeka alag hota hai
-                CKEDITOR.instances.editor_en.setData(data.q_en || data.question || "");
+                CKEDITOR.instances.editor_en.setData(data.q_en || "");
                 CKEDITOR.instances.editor_hi.setData(data.q_hi || "");
                 CKEDITOR.instances.editor_exp.setData(data.exp || "");
                 
@@ -83,7 +123,7 @@
                 document.getElementsByName('od')[0].value = data.od || "";
                 document.getElementsByName('ans')[0].value = data.ans || "A";
                 
-                btn.innerText = "Generate";
+                btn.innerText = "Generate in Editor";
                 btn.disabled = false;
             })
             .catch(err => {
