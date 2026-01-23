@@ -193,5 +193,10 @@ def admin_dashboard():
     all_qs = Question.query.order_by(Question.id.desc()).all() # Naye sawal pehle dikhenge
     count = len(all_qs)
     return render_template("admin.html", categories=Category.query.all(), questions=all_qs, q_count=count)
+@app.route("/admin")
+def admin_dashboard():
+    # Database se saare sawal nikalna taaki table mein dikh sakein
+    all_qs = Question.query.order_by(Question.id.desc()).all() 
+    return render_template("admin.html", categories=Category.query.all(), questions=all_qs, q_count=len(all_qs))
 if __name__ == "__main__":
     app.run(debug=True)
