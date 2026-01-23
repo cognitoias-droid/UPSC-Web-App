@@ -23,19 +23,35 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # --- GEMINI AI SETUP ---
+# --- GEMINI AI SETUP (Auto-Detect Logic) ---
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_best_model():
     try:
-        priority = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro', 'models/gemini-2.0-flash-exp']
+        # Step 1: Available models ki list mangwana
         available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        for p in priority:
-            if p in available_models:
-                return genai.GenerativeModel(p)
+        
+        # Step 2: Priority Order (Stability ke hisab se)
+        # 1.5-flash sabse stable hai free tier ke liye
+        priority_list = [
+            'models/gemini-1.5-flash', 
+            'models/gemini-1.5-flash-8b', 
+            'models/gemini-1.5-pro'
+        ]
+        
+        for model_path in priority_list:
+            if model_path in available_models:
+                print(f"✅ Success: Using {model_path}")
+                return genai.GenerativeModel(model_path)
+        
+        # Step 3: Agar kuch na mile toh default flash par jana
         return genai.GenerativeModel('gemini-1.5-flash')
-    except:
+        
+    except Exception as e:
+        print(f"⚠️ Model Detection Error: {e}. Falling back to 1.5-flash.")
         return genai.GenerativeModel('gemini-1.5-flash')
 
+# Model initialize karein
 ai_model = get_best_model()
 
 # --- MODELS ---
