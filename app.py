@@ -130,5 +130,35 @@ def take_test():
     # Hum filhaal random 5 sawal test ke liye nikaal rahe hain
     questions = Question.query.limit(5).all()
     return render_template("test.html", questions=questions)
+@app.route("/admin/bulk_ai", methods=["POST"])
+def bulk_ai():
+    topic = request.json.get("topic")
+    count = int(request.json.get("count", 3)) # Default 3 sawal
+    
+    prompt = f"""Create {count} UPSC MCQs on '{topic}'. 
+    Return ONLY a JSON list of objects. Each object must have:
+    'q_en', 'q_hi', 'oa', 'ob', 'oc', 'od', 'ans' (only letter A/B/C/D), 'exp'.
+    Keep it strictly professional and bilingual."""
+
+    try:
+        response = ai_model.generate_content(prompt)
+        # Clean text in case AI adds markdown like ```json
+        raw_text = response.text.strip().replace('```json', '').replace('```', '')
+        
+        # JSON parse karke database mein bulk save karna
+        questions_data = json.loads(raw_text)
+        
+        for item in questions_data:
+            new_q = Question(
+                q_en=item['q_en'], q_hi=item['q_hi'],
+                oa=item['oa'], ob=item['ob'], oc=item['oc'], od=item['od'],
+                ans=item['ans'], exp=item['exp']
+            )
+            db.session.add(new_q)
+        
+        db.session.commit()
+        return jsonify({"message": f"Safalta! {len(questions_data)} sawal database mein jodh diye gaye hain."})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 if __name__ == "__main__":
     app.run(debug=True)
