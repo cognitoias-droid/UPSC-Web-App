@@ -60,6 +60,32 @@
         </form>
     </div>
 
+    <hr style="margin: 40px 0;">
+    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <h3 style="color: #2c3e50;">📚 Questions Bank (Total: {{ q_count }})</h3>
+        <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px;">
+            <thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 10px; width: 50px;">ID</th>
+                    <th style="padding: 10px;">Question (EN/HI)</th>
+                    <th style="padding: 10px; width: 60px;">Ans</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in questions %}
+                <tr>
+                    <td style="padding: 10px; text-align: center;">{{ q.id }}</td>
+                    <td style="padding: 10px;">
+                        <div style="font-weight: bold; color: #1a73e8;">{{ q.q_en | safe }}</div>
+                        <div style="color: #5f6368; margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px;">{{ q.q_hi | safe }}</div>
+                    </td>
+                    <td style="padding: 10px; text-align: center; font-weight: bold; color: green;">{{ q.ans }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
     <script>
         // CKEditor initialization
         CKEDITOR.replace('editor_en');
