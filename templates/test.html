@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <title>CognitoIAS - Practice Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f7f6; }
+        .question-card { display: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .active { display: block; animation: fadeIn 0.5s; }
+        .timer { font-size: 1.5rem; font-weight: bold; color: #d9534f; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+        <h4 class="text-primary m-0">CognitoIAS Practice Test</h4>
+        <div class="timer" id="timer">10:00</div>
+    </div>
+
+    <form id="quizForm">
+        {% for q in questions %}
+        <div class="card question-card p-4 mb-4 {% if loop.index0 == 0 %}active{% endif %}" id="q-{{ loop.index0 }}">
+            <h5 class="text-muted">Question {{ loop.index }} of {{ questions|length }}</h5>
+            <hr>
+            <div class="mb-4">
+                <p class="fw-bold mb-1" style="font-size: 1.1rem;">{{ q.q_en }}</p>
+                <p class="text-muted small italic">{{ q.q_hi }}</p>
+            </div>
+
+            <div class="options">
+                {% for label, opt in [('A', q.oa), ('B', q.ob), ('C', q.oc), ('D', q.od)] %}
+                <div class="form-check border p-3 rounded mb-2 hover-shadow" style="cursor: pointer;">
+                    <input class="form-check-input ms-0" type="radio" name="q{{ q.id }}" value="{{ label }}" id="opt{{ q.id }}{{ label }}">
+                    <label class="form-check-label ms-4 w-100" for="opt{{ q.id }}{{ label }}">
+                        <strong>{{ label }}.</strong> {{ opt }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-4 d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="prevQ({{ loop.index0 }})" {% if loop.first %}disabled{% endif %}>Previous</button>
+                {% if loop.last %}
+                <button type="button" class="btn btn-success" onclick="finishTest()">Finish Test</button>
+                {% else %}
+                <button type="button" class="btn btn-primary" onclick="nextQ({{ loop.index0 }})">Save & Next</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </form>
+</div>
+
+<script>
+    function nextQ(index) {
+        document.getElementById('q-' + index).classList.remove('active');
+        document.getElementById('q-' + (index + 1)).classList.add('active');
+    }
+
+    function prevQ(index) {
+        document.getElementById('q-' + index).classList.remove('active');
+        document.getElementById('q-' + (index - 1)).classList.add('active');
+    }
+
+    function finishTest() {
+        alert("Test Complete! (Abhi hum results calculate karna kal seekhenge)");
+        window.location.href = "/";
+    }
+
+    // Basic Timer Logic
+    let time = 600; 
+    setInterval(() => {
+        let mins = Math.floor(time / 60);
+        let secs = time % 60;
+        document.getElementById('timer').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        if(time > 0) time--;
+    }, 1000);
+</script>
+
+</body>
+</html>
