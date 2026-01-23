@@ -28,28 +28,40 @@ genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_best_model():
     try:
-        # Step 1: Available models ki list mangwana
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        # Saare available models ki list mangwayein
+        available_models = genai.list_models()
         
-        # Step 2: Priority Order (Stability ke hisab se)
-        # 1.5-flash sabse stable hai free tier ke liye
-        priority_list = [
-            'models/gemini-1.5-flash', 
-            'models/gemini-1.5-flash-8b', 
-            'models/gemini-1.5-pro'
+        # Humein wo model chahiye jo 'generateContent' support kare
+        # Aur hum 'gemini-1.5' ya 'gemini-pro' ko priority denge
+        usable_models = [
+            m.name for m in available_models 
+            if 'generateContent' in m.supported_generation_methods
         ]
         
-        for model_path in priority_list:
-            if model_path in available_models:
-                print(f"✅ Success: Using {model_path}")
-                return genai.GenerativeModel(model_path)
+        print(f"DEBUG: Available models are: {usable_models}")
+
+        # Priority List (Inme se jo bhi pehle mil jaye)
+        priority = [
+            'models/gemini-1.5-flash', 
+            'models/gemini-pro', 
+            'models/gemini-1.0-pro'
+        ]
+
+        for p in priority:
+            if p in usable_models:
+                print(f"✅ Success: Connecting to {p}")
+                return genai.GenerativeModel(p)
         
-        # Step 3: Agar kuch na mile toh default flash par jana
-        return genai.GenerativeModel('gemini-1.5-flash')
+        # Agar kuch na mile toh jo pehla available hai wahi uthalo
+        if usable_models:
+            return genai.GenerativeModel(usable_models[0])
+            
+        return genai.GenerativeModel('gemini-pro') # Last hope
         
     except Exception as e:
-        print(f"⚠️ Model Detection Error: {e}. Falling back to 1.5-flash.")
-        return genai.GenerativeModel('gemini-1.5-flash')
+        print(f"⚠️ Model Error: {str(e)}")
+        # Bina path ke try karein, kabhi kabhi sirf naam kaam karta hai
+        return genai.GenerativeModel('gemini-pro')
 
 # Model initialize karein
 ai_model = get_best_model()
