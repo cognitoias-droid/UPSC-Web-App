@@ -125,6 +125,10 @@ def add_category():
         db.session.add(Category(name=name))
         db.session.commit()
     return redirect(url_for('admin_dashboard'))
-
+@app.route("/test")
+def take_test():
+    # Hum filhaal random 5 sawal test ke liye nikaal rahe hain
+    questions = Question.query.limit(5).all()
+    return render_template("test.html", questions=questions)
 if __name__ == "__main__":
     app.run(debug=True)
