@@ -188,5 +188,10 @@ def bulk_ai():
         return jsonify({"message": f"Safalta! {len(questions_data)} sawal database mein jodh diye gaye hain."})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    @app.route("/admin")
+def admin_dashboard():
+    all_qs = Question.query.order_by(Question.id.desc()).all() # Naye sawal pehle dikhenge
+    count = len(all_qs)
+    return render_template("admin.html", categories=Category.query.all(), questions=all_qs, q_count=count)
 if __name__ == "__main__":
     app.run(debug=True)
