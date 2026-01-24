@@ -5,72 +5,75 @@
     <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
     <style>
         .admin-card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .form-label { font-weight: bold; display: block; margin-bottom: 5px; margin-top: 10px; }
-        .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .id-badge { background: #e3f2fd; color: #0d47a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 12px; }
-        .structure-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; height: 250px; overflow-y: auto; }
-        .del-btn { color: #dc3545; text-decoration: none; font-weight: bold; margin-left: 10px; cursor: pointer; }
-        .del-btn:hover { color: #a71d2a; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background: #f4f4f4; }
+        .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; }
+        .id-badge { background: #e3f2fd; color: #0d47a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 11px; }
+        .structure-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; height: 200px; overflow-y: auto; font-size: 13px; }
+        .mapping-box { background: #e1f5fe; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #03a9f4; }
     </style>
 </head>
 <body style="font-family: Arial; padding: 30px; background: #f0f2f5;">
+
     <h1>Admin Dashboard - CognitoIAS</h1>
 
     <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #4caf50;">
-        <h4>🏗️ Structure Manager</h4>
-        <form action="/admin/add_structure" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <select name="type" class="form-control" style="width: auto;">
-                <option value="category">New Category</option>
-                <option value="subcat">New SubCategory</option>
-                <option value="topic">New Topic</option>
-            </select>
-            <input type="text" name="name" placeholder="Name" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
-            <input type="number" name="parent_id" placeholder="Parent ID" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100px;">
-            <button type="submit" style="background: #4caf50; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px;">Add Structure</button>
-        </form>
+        <h4>🏗️ Structure Manager (Smart Selection)</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+            <form action="/admin/add_structure" method="POST">
+                <input type="hidden" name="type" value="category">
+                <strong>New Category:</strong>
+                <input type="text" name="name" placeholder="e.g. History" class="form-control" required>
+                <button type="submit" style="width:100%; background:#4caf50; color:white; border:none; padding:8px;">Add Category</button>
+            </form>
+            <form action="/admin/add_structure" method="POST">
+                <input type="hidden" name="type" value="subcat">
+                <strong>New SubCategory under:</strong>
+                <select name="parent_id" class="form-control" required>
+                    {% for cat in categories %}<option value="{{cat.id}}">{{cat.name}}</option>{% endfor %}
+                </select>
+                <input type="text" name="name" placeholder="e.g. Ancient" class="form-control" required>
+                <button type="submit" style="width:100%; background:#2e7d32; color:white; border:none; padding:8px;">Add SubCat</button>
+            </form>
+            <form action="/admin/add_structure" method="POST">
+                <input type="hidden" name="type" value="topic">
+                <strong>New Topic under SubCat:</strong>
+                <select name="parent_id" class="form-control" required>
+                    {% for cat in categories %}{% for sub in cat.subcategories %}
+                    <option value="{{sub.id}}">{{sub.name}} ({{cat.name}})</option>
+                    {% endfor %}{% endfor %}
+                </select>
+                <input type="text" name="name" placeholder="e.g. Mauryan" class="form-control" required>
+                <button type="submit" style="width:100%; background:#1b5e20; color:white; border:none; padding:8px;">Add Topic</button>
+            </form>
+        </div>
     </div>
 
-    <div class="admin-card" style="border-top: 4px solid #2196f3;">
-        <h4 style="color: #1976d2; margin-top: 0;">📋 Hierarchy & IDs</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-            <div>
-                <strong>Categories:</strong>
-                <div class="structure-box">
-                    {% for cat in categories %}
-                    <div style="margin-bottom:5px;">{{ cat.name }} <span class="id-badge">{{ cat.id }}</span> <a href="/admin/delete_structure/category/{{ cat.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></div>
-                    {% endfor %}
-                </div>
-            </div>
-            <div>
-                <strong>SubCategories:</strong>
+    <div class="admin-card">
+        <h4 style="color: #1976d2;">📋 Quick ID Lookup (for Mapping AI)</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div><strong>SubCategories & IDs:</strong>
                 <div class="structure-box">
                     {% for cat in categories %}{% for sub in cat.subcategories %}
-                    <div style="margin-bottom:5px;">{{ sub.name }} <span class="id-badge">{{ sub.id }}</span> <a href="/admin/delete_structure/subcat/{{ sub.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></div>
+                    <div>{{ sub.name }} <span class="id-badge">ID: {{ sub.id }}</span></div>
                     {% endfor %}{% endfor %}
                 </div>
             </div>
-            <div>
-                <strong>Topics:</strong>
+            <div><strong>Topics & IDs:</strong>
                 <div class="structure-box">
                     {% for cat in categories %}{% for sub in cat.subcategories %}{% for top in sub.topics %}
-                    <div style="margin-bottom:5px;">{{ top.name }} <span class="id-badge">{{ top.id }}</span> <a href="/admin/delete_structure/topic/{{ top.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></div>
+                    <div>{{ top.name }} <span class="id-badge">ID: {{ top.id }}</span></div>
                     {% endfor %}{% endfor %}{% endfor %}
                 </div>
             </div>
         </div>
     </div>
 
-    <div style="background: #e1f5fe; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #03a9f4;">
-        <h4 style="color: #0288d1; margin-top: 0;">🗺️ Mapping AI Draft Specialist</h4>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <input type="text" id="map-region" placeholder="Region: e.g. Black Sea, Red Sea" style="flex: 2; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-            <input type="number" id="map-topic-id" placeholder="Target Topic ID" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-            <button type="button" id="map-btn" onclick="generateMapMCQ()" style="padding: 8px 15px; background: #03a9f4; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">Generate Draft</button>
+    <div class="mapping-box">
+        <h4 style="color: #0288d1; margin-top: 0;">🗺️ Mapping AI Draft</h4>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="map-region" placeholder="Region: e.g. South China Sea" style="flex: 2; padding: 8px;">
+            <input type="number" id="map-topic-id" placeholder="Topic ID" style="flex: 1; padding: 8px;">
+            <button type="button" id="map-btn" onclick="generateMapMCQ()" style="background:#03a9f4; color:white; border:none; padding:8px 20px; border-radius:4px;">Generate Draft</button>
         </div>
-        <p style="font-size: 11px; color: #555; margin-top: 5px;">* Topic ID upar se dekh kar bharein taaki sawal sahi jagah save ho.</p>
     </div>
 
     <div class="admin-card" style="border-left: 5px solid green;">
@@ -78,15 +81,11 @@
         <form action="/admin/save_mcq" method="POST">
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                 <select id="main_cat" onchange="loadSubCats()" class="form-control">
-                    <option value="">-- Cat --</option>
-                    {% for cat in categories %} <option value="{{ cat.id }}">{{ cat.name }}</option> {% endfor %}
+                    <option value="">-- Category --</option>
+                    {% for cat in categories %}<option value="{{cat.id}}">{{cat.name}}</option>{% endfor %}
                 </select>
-                <select id="sub_cat" onchange="loadTopics()" class="form-control">
-                    <option value="">-- SubCat --</option>
-                </select>
-                <select id="topic_id_final" name="topic_id" class="form-control" required>
-                    <option value="">-- Topic --</option>
-                </select>
+                <select id="sub_cat" onchange="loadTopics()" class="form-control"><option value="">-- SubCat --</option></select>
+                <select id="topic_id_final" name="topic_id" class="form-control" required><option value="">-- Topic --</option></select>
             </div>
             <textarea name="q_en" id="editor_en"></textarea>
             <textarea name="q_hi" id="editor_hi"></textarea>
@@ -96,33 +95,22 @@
                 <input type="text" name="oc" placeholder="Opt C" class="form-control">
                 <input type="text" name="od" placeholder="Opt D" class="form-control">
             </div>
-            <select name="ans" class="form-control" style="width: 100px; margin-top: 10px;">
-                <option value="A">A</option><option value="B">B</option>
-                <option value="C">C</option><option value="D">D</option>
-            </select>
+            <select name="ans" class="form-control" style="width: 100px;"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>
             <textarea name="exp" id="editor_exp"></textarea>
-            <button type="submit" style="background: green; color: white; padding: 12px; border: none; margin-top: 20px; width: 100%; cursor: pointer; border-radius: 4px;">Save MCQ To Database</button>
+            <button type="submit" style="background: green; color: white; padding: 12px; border: none; margin-top: 20px; width: 100%; cursor: pointer; border-radius: 4px; font-weight: bold;">SAVE MCQ</button>
         </form>
     </div>
 
     <div class="admin-card">
-        <h3>📚 Questions Bank (Total: {{ q_count }})</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Question</th>
-                    <th>Ans</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
+        <h3>📚 Question Bank ({{ q_count }})</h3>
+        <table style="width:100%; border-collapse: collapse;">
+            <thead style="background:#eee;"><tr><th>ID</th><th>Question</th><th>Action</th></tr></thead>
             <tbody>
                 {% for q in questions %}
-                <tr>
-                    <td>{{ q.id }}</td>
-                    <td>{{ q.q_en | safe }}</td>
-                    <td>{{ q.ans }}</td>
-                    <td><a href="/admin/delete_question/{{ q.id }}" class="del-btn" onclick="return confirm('Mita dein?')">Delete</a></td>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <td style="padding:10px;">{{q.id}}</td>
+                    <td style="padding:10px;">{{q.q_en|safe}}</td>
+                    <td style="padding:10px;"><a href="/admin/delete_question/{{q.id}}" style="color:red; text-decoration:none;" onclick="return confirm('Mita dein?')">✖ Delete</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -135,12 +123,9 @@
         function generateMapMCQ() {
             let region = document.getElementById('map-region').value;
             let targetId = document.getElementById('map-topic-id').value;
-            let btn = document.getElementById('map-btn');
+            if(!region || !targetId) return alert("Region aur Topic ID dono bhariye!");
 
-            if(!region || !targetId) return alert("Region aur Target Topic ID dono zaroori hain!");
-            
-            btn.innerText = "AI Mapping..."; btn.disabled = true;
-
+            document.getElementById('map-btn').innerText = "AI is Thinking...";
             fetch('/admin/generate_mapping_ai', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -156,14 +141,9 @@
                 document.getElementsByName('oc')[0].value = data.oc;
                 document.getElementsByName('od')[0].value = data.od;
                 document.getElementsByName('ans')[0].value = data.ans;
-                
-                // Automatically set the target topic in the manual form
-                document.getElementById('topic_id_final').innerHTML = `<option value="${targetId}" selected>Selected Topic (ID: ${targetId})</option>`;
-                
-                btn.innerText = "Generate Draft"; btn.disabled = false;
-                
-                // Smooth scroll down to the editor
-                document.getElementById('editor_en').scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('topic_id_final').innerHTML = `<option value="${targetId}" selected>Mapping Topic (ID: ${targetId})</option>`;
+                document.getElementById('map-btn').innerText = "Generate Draft";
+                window.scrollTo(0, document.body.scrollHeight / 2);
             });
         }
 
