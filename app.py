@@ -140,6 +140,34 @@ def upload_csv():
 def take_test():
     questions = Question.query.limit(5).all()
     return render_template("test.html", questions=questions)
+@app.route("/submit_test", methods=["POST"])
+def submit_test():
+    q_ids = request.form.getlist("question_ids") # Jo IDs test mein thi
+    score = 0
+    total = len(q_ids)
+    results_summary = []
 
+    for q_id in q_ids:
+        question = Question.query.get(int(q_id))
+        user_ans = request.form.get(f"ans_{q_id}") # Student ka answer
+        correct_ans = question.ans # Database ka sahi answer
+
+        is_correct = (user_ans == correct_ans)
+        if is_correct:
+            score += 1
+
+        # Summary banana taaki baad mein explanation dikha sakein
+        results_summary.append({
+            "question": question,
+            "user_ans": user_ans,
+            "correct_ans": correct_ans,
+            "is_correct": is_correct
+        })
+
+    # Ab hum result page dikhayenge
+    return render_template("result.html", 
+                           score=score, 
+                           total=total, 
+                           results=results_summary)
 if __name__ == "__main__":
     app.run(debug=True)
