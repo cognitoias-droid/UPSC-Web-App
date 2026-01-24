@@ -235,6 +235,28 @@ def explain_ai(q_id):
         return jsonify({"explanation": response.text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+ @app.route("/admin/generate_mapping_ai", methods=["POST"])
+def generate_mapping_ai():
+    try:
+        region = request.json.get("topic") # Jaise: West Asia, Red Sea, Himalayas
+        prompt = f"""
+        Create 1 high-quality UPSC Mapping MCQ on '{region}'.
+        The question should focus on borders, cities, rivers, or mountains.
+        Use <br> for statements.
+        
+        Return ONLY a JSON object: 
+        {{
+            "q_en": "Question in English with <br> for locations",
+            "q_hi": "Hindi translation with <br>",
+            "oa": "Option A", "ob": "Option B", "oc": "Option C", "od": "Option D",
+            "ans": "A", 
+            "exp": "Detailed mapping logic (e.g. why Red Sea borders X and not Y) with <br>"
+        }}
+        """
+        response = ai_model.generate_content(prompt)
+        text = response.text.strip().replace('```json', '').replace('```', '')
+        return jsonify(json.loads(text))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 if __name__ == "__main__":
     app.run(debug=True)
