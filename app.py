@@ -29,7 +29,7 @@ def get_best_model():
     try:
         available_models = genai.list_models()
         usable_models = [m.name for m in available_models if 'generateContent' in m.supported_generation_methods]
-        priority = ['models/gemini-1.5-flash', 'models/gemini-pro', 'models/gemini-1.0-pro']
+        priority = ['models/gemini-1.5-flash', 'models/gemini-pro']
         for p in priority:
             if p in usable_models:
                 return genai.GenerativeModel(p)
@@ -105,31 +105,10 @@ def save_mcq():
 def generate_ai():
     try:
         topic = request.json.get("topic")
-        prompt = f"Create 1 high-quality UPSC MCQ on {topic}. Use <br> for statements. Return ONLY JSON."
+        prompt = f"Create 1 UPSC MCQ on {topic}. Use <br> for statements. Return ONLY JSON."
         response = ai_model.generate_content(prompt)
         text = response.text.strip().replace('```json', '').replace('```', '')
         return jsonify(json.loads(text))
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/admin/bulk_ai", methods=["POST"])
-def bulk_ai():
-    try:
-        data = request.json
-        topic_name = data.get("topic")
-        topic_id = data.get("topic_id")
-        count = int(data.get("count", 3))
-        prompt = f"Create {count} UPSC MCQs on '{topic_name}' with <br> for statements. Return ONLY JSON list."
-        response = ai_model.generate_content(prompt)
-        raw_text = response.text.strip().replace('```json', '').replace('```', '')
-        questions_data = json.loads(raw_text)
-        for item in questions_data:
-            db.session.add(Question(
-                q_en=item['q_en'], q_hi=item['q_hi'], oa=item['oa'], ob=item['ob'], oc=item['oc'], od=item['od'],
-                ans=item['ans'].strip().upper()[0], exp=item['exp'], topic_id=int(topic_id)
-            ))
-        db.session.commit()
-        return jsonify({"message": "Safalta!"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -159,9 +138,12 @@ def add_structure():
     stype = request.form.get("type")
     name = request.form.get("name")
     p_id = request.form.get("parent_id")
-    if stype == "category": db.session.add(Category(name=name))
-    elif stype == "subcat": db.session.add(SubCategory(name=name, category_id=p_id))
-    elif stype == "topic": db.session.add(Topic(name=name, subcategory_id=p_id))
+    if stype == "category":
+        db.session.add(Category(name=name))
+    elif stype == "subcat":
+        db.session.add(SubCategory(name=name, category_id=p_id))
+    elif stype == "topic":
+        db.session.add(Topic(name=name, subcategory_id=p_id))
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
