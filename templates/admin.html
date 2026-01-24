@@ -9,7 +9,8 @@
         .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         .id-badge { background: #e3f2fd; color: #0d47a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 12px; }
         .structure-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; }
-        .topic-badge { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+        .del-btn { color: #dc3545; text-decoration: none; font-weight: bold; margin-left: 10px; cursor: pointer; }
+        .del-btn:hover { color: #a71d2a; }
     </style>
 </head>
 <body style="font-family: Arial; padding: 30px; background: #f0f2f5;">
@@ -17,52 +18,60 @@
 
     <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #4caf50;">
         <h4>🏗️ Structure Manager</h4>
-        <p style="font-size: 12px; color: #666;">Note: Parent ID tabhi bharein jab Subcat ya Topic bana rahe hon.</p>
         <form action="/admin/add_structure" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap;">
             <select name="type" class="form-control" style="width: auto;">
                 <option value="category">New Category</option>
-                <option value="subcat">New SubCategory (under Cat ID)</option>
-                <option value="topic">New Topic (under SubCat ID)</option>
+                <option value="subcat">New SubCategory</option>
+                <option value="topic">New Topic</option>
             </select>
-            <input type="text" name="name" placeholder="Name (e.g. Mauryan Empire)" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+            <input type="text" name="name" placeholder="Name" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
             <input type="number" name="parent_id" placeholder="Parent ID" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100px;">
-            <button type="submit" style="background: #4caf50; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px;">Add Structure</button>
+            <button type="submit" style="background: #4caf50; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px;">Add</button>
         </form>
     </div>
 
     <div class="admin-card" style="border-top: 4px solid #2196f3;">
-        <h4 style="color: #1976d2; margin-top: 0;">📋 Hierarchy Explorer (Get IDs for Bulk AI)</h4>
+        <h4 style="color: #1976d2; margin-top: 0;">📋 Hierarchy Explorer & Management</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
             <div>
-                <strong>1. Categories (Dada):</strong>
+                <strong>1. Categories:</strong>
                 <div class="structure-box">
                     <ul style="padding-left: 15px;">
                         {% for cat in categories %}
-                        <li style="margin-bottom:5px;">{{ cat.name }} <span class="id-badge">ID: {{ cat.id }}</span></li>
+                        <li style="margin-bottom:8px;">
+                            {{ cat.name }} <span class="id-badge">ID: {{ cat.id }}</span>
+                            <a href="/admin/delete_structure/category/{{ cat.id }}" class="del-btn" onclick="return confirm('Dhyan dein! Is Category ke saare sawal aur topics delete ho jayenge. Sure?')">✖</a>
+                        </li>
                         {% endfor %}
                     </ul>
                 </div>
             </div>
             <div>
-                <strong>2. SubCategories (Pita):</strong>
+                <strong>2. SubCategories:</strong>
                 <div class="structure-box">
                     <ul style="padding-left: 15px;">
                         {% for cat in categories %}
                             {% for sub in cat.subcategories %}
-                            <li style="margin-bottom:5px;">{{ sub.name }} <span class="id-badge">ID: {{ sub.id }}</span> <br><small>Under Cat: {{ cat.id }}</small></li>
+                            <li style="margin-bottom:8px;">
+                                {{ sub.name }} <span class="id-badge">ID: {{ sub.id }}</span>
+                                <a href="/admin/delete_structure/subcat/{{ sub.id }}" class="del-btn" onclick="return confirm('Is SubCategory ko delete karein?')">✖</a>
+                            </li>
                             {% endfor %}
                         {% endfor %}
                     </ul>
                 </div>
             </div>
             <div>
-                <strong>3. Topics (Beta):</strong>
+                <strong>3. Topics:</strong>
                 <div class="structure-box">
                     <ul style="padding-left: 15px;">
                         {% for cat in categories %}
                             {% for sub in cat.subcategories %}
                                 {% for top in sub.topics %}
-                                <li style="margin-bottom:5px;">{{ top.name }} <span class="id-badge topic-badge">ID: {{ top.id }}</span> <br><small>Under Sub: {{ sub.id }}</small></li>
+                                <li style="margin-bottom:8px;">
+                                    {{ top.name }} <span class="id-badge">ID: {{ top.id }}</span>
+                                    <a href="/admin/delete_structure/topic/{{ top.id }}" class="del-btn" onclick="return confirm('Is Topic ke saare sawal mita dein?')">✖</a>
+                                </li>
                                 {% endfor %}
                             {% endfor %}
                         {% endfor %}
@@ -73,92 +82,67 @@
     </div>
 
     <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #7b1fa2;">
-        <h4 style="margin-top:0; color: #7b1fa2;">🚀 AI Bulk Magic (Targeted)</h4>
+        <h4 style="margin-top:0; color: #7b1fa2;">🚀 AI Bulk Magic</h4>
         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-            <input type="text" id="bulk-topic" placeholder="Topic Name for AI (e.g. Akbar's Policy)" style="padding: 8px;">
-            <input type="number" id="target-topic-id" placeholder="Topic ID (from list above)" style="padding: 8px;">
+            <input type="text" id="bulk-topic" placeholder="AI Topic (e.g. Mughal Architecture)" style="padding: 8px;">
+            <input type="number" id="target-topic-id" placeholder="Target Topic ID" style="padding: 8px;">
             <input type="number" id="bulk-count" value="5" min="1" max="10" style="padding: 8px;">
         </div>
-        <button type="button" onclick="generateBulk()" id="bulk-btn" style="margin-top: 10px; width: 100%; padding: 10px; background: #7b1fa2; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">Generate & Save to Topic</button>
-        <div id="bulk-status" class="mt-2 small"></div>
+        <button type="button" onclick="generateBulk()" id="bulk-btn" style="margin-top: 10px; width: 100%; padding: 10px; background: #7b1fa2; color: white; border: none; cursor: pointer; border-radius: 4px;">Generate & Save</button>
     </div>
 
     <div class="admin-card" style="border-left: 5px solid green;">
-        <h3>Add New MCQ (Manual/Draft)</h3>
-        <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-            <p style="margin-top:0;"><strong>✨ AI Draft:</strong> <input type="text" id="ai-topic" placeholder="Topic for single draft"> 
-            <button type="button" onclick="askAI()" id="ai-btn" style="background:#1976d2; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Generate in Editor</button></p>
-        </div>
-
+        <h3>Add MCQ</h3>
         <form action="/admin/save_mcq" method="POST">
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <div>
-                    <label class="form-label text-primary">1. Category</label>
-                    <select id="main_cat" onchange="loadSubCats()" class="form-control">
-                        <option value="">-- Select --</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}">{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="form-label text-primary">2. SubCategory</label>
-                    <select id="sub_cat" onchange="loadTopics()" class="form-control">
-                        <option value="">-- Select --</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="form-label text-primary">3. Final Topic</label>
-                    <select id="topic_id_final" name="topic_id" class="form-control" required>
-                        <option value="">-- Select --</option>
-                    </select>
-                </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <select id="main_cat" onchange="loadSubCats()" class="form-control">
+                    <option value="">-- Cat --</option>
+                    {% for cat in categories %} <option value="{{ cat.id }}">{{ cat.name }}</option> {% endfor %}
+                </select>
+                <select id="sub_cat" onchange="loadTopics()" class="form-control">
+                    <option value="">-- SubCat --</option>
+                </select>
+                <select id="topic_id_final" name="topic_id" class="form-control" required>
+                    <option value="">-- Topic --</option>
+                </select>
             </div>
-
-            <p class="form-label">English Question:</p>
             <textarea name="q_en" id="editor_en"></textarea>
-            <p class="form-label">Hindi Question:</p>
             <textarea name="q_hi" id="editor_hi"></textarea>
-
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                <input type="text" name="oa" placeholder="Option A" required class="form-control">
-                <input type="text" name="ob" placeholder="Option B" required class="form-control">
-                <input type="text" name="oc" placeholder="Option C" required class="form-control">
-                <input type="text" name="od" placeholder="Option D" required class="form-control">
+                <input type="text" name="oa" placeholder="Opt A" required class="form-control">
+                <input type="text" name="ob" placeholder="Opt B" required class="form-control">
+                <input type="text" name="oc" placeholder="Opt C" required class="form-control">
+                <input type="text" name="od" placeholder="Opt D" required class="form-control">
             </div>
-
-            <p class="form-label">Correct Answer:</p>
-            <select name="ans" class="form-control" style="width: 100px;">
+            <select name="ans" class="form-control" style="width: 100px; margin-top: 10px;">
                 <option value="A">A</option><option value="B">B</option>
                 <option value="C">C</option><option value="D">D</option>
             </select>
-
-            <p class="form-label">Explanation:</p>
             <textarea name="exp" id="editor_exp"></textarea>
-
-            <button type="submit" style="background: green; color: white; padding: 12px 25px; border: none; margin-top: 20px; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%;">Save MCQ To Database</button>
+            <button type="submit" style="background: green; color: white; padding: 12px; border: none; margin-top: 20px; width: 100%; cursor: pointer; border-radius: 4px;">Save MCQ</button>
         </form>
     </div>
 
     <div class="admin-card">
-        <h3 style="color: #2c3e50;">📚 Questions Bank (Total: {{ q_count }})</h3>
-        <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px;">
+        <h3 style="color: #2c3e50;">📚 Questions Bank ({{ q_count }})</h3>
+        <table border="1" style="width: 100%; border-collapse: collapse; font-size: 14px;">
             <thead style="background: #f8f9fa;">
                 <tr>
-                    <th style="padding: 10px; width: 50px;">ID</th>
-                    <th style="padding: 10px;">Question (EN/HI)</th>
-                    <th style="padding: 10px; width: 60px;">Ans</th>
+                    <th>ID</th>
+                    <th>Question</th>
+                    <th>Ans</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for q in questions %}
                 <tr>
-                    <td style="padding: 10px; text-align: center;">{{ q.id }}</td>
-                    <td style="padding: 10px;">
-                        <div style="font-weight: bold; color: #1a73e8;">{{ q.q_en | safe }}</div>
-                        <div style="color: #5f6368; margin-top: 5px;">{{ q.q_hi | safe }}</div>
+                    <td style="text-align:center;">{{ q.id }}</td>
+                    <td>{{ q.q_en | safe }}<br><small>{{ q.q_hi | safe }}</small></td>
+                    <td style="text-align:center;">{{ q.ans }}</td>
+                    <td style="text-align:center;">
+                        <a href="/admin/delete_question/{{ q.id }}" class="del-btn" onclick="return confirm('Is sawal ko mita dein?')">Delete</a>
                     </td>
-                    <td style="padding: 10px; text-align: center; font-weight: bold; color: green;">{{ q.ans }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -166,70 +150,33 @@
     </div>
 
     <script>
-        CKEDITOR.replace('editor_en');
-        CKEDITOR.replace('editor_hi');
-        CKEDITOR.replace('editor_exp');
-
+        CKEDITOR.replace('editor_en'); CKEDITOR.replace('editor_hi'); CKEDITOR.replace('editor_exp');
+        
         function loadSubCats() {
             let catId = document.getElementById('main_cat').value;
-            let subSelect = document.getElementById('sub_cat');
-            if(!catId) return;
-            subSelect.innerHTML = '<option>Loading...</option>';
             fetch('/get_subcats/' + catId).then(res => res.json()).then(data => {
-                subSelect.innerHTML = '<option value="">-- Select --</option>';
-                data.forEach(s => { subSelect.innerHTML += `<option value="${s.id}">${s.name} (ID: ${s.id})</option>`; });
+                let s = document.getElementById('sub_cat');
+                s.innerHTML = '<option value="">-- SubCat --</option>';
+                data.forEach(x => s.innerHTML += `<option value="${x.id}">${x.name}</option>`);
             });
         }
-
         function loadTopics() {
             let subId = document.getElementById('sub_cat').value;
-            let topicSelect = document.getElementById('topic_id_final');
-            if(!subId) return;
-            topicSelect.innerHTML = '<option>Loading...</option>';
             fetch('/get_topics/' + subId).then(res => res.json()).then(data => {
-                topicSelect.innerHTML = '<option value="">-- Select --</option>';
-                data.forEach(t => { topicSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`; });
+                let t = document.getElementById('topic_id_final');
+                t.innerHTML = '<option value="">-- Topic --</option>';
+                data.forEach(x => t.innerHTML += `<option value="${x.id}">${x.name}</option>`);
             });
         }
-
         function generateBulk() {
-            let topicName = document.getElementById('bulk-topic').value;
-            let topicId = document.getElementById('target-topic-id').value;
-            let count = document.getElementById('bulk-count').value;
-            let btn = document.getElementById('bulk-btn');
-
-            if(!topicName || !topicId) return alert("Topic Name aur Topic ID dono zaroori hain!");
-
-            btn.innerText = "AI Writing Questions..."; btn.disabled = true;
+            let n = document.getElementById('bulk-topic').value;
+            let i = document.getElementById('target-topic-id').value;
+            let c = document.getElementById('bulk-count').value;
             fetch('/admin/bulk_ai', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({topic: topicName, count: count, topic_id: topicId})
-            }).then(res => res.json()).then(data => {
-                alert(data.message || data.error);
-                location.reload();
-            });
-        }
-
-        function askAI() {
-            let topic = document.getElementById('ai-topic').value;
-            if(!topic) return alert("Pehle topic likhiye!");
-            document.getElementById('ai-btn').innerText = "Thinking...";
-            fetch('/admin/generate_ai', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({topic: topic})
-            }).then(res => res.json()).then(data => {
-                CKEDITOR.instances.editor_en.setData(data.q_en || "");
-                CKEDITOR.instances.editor_hi.setData(data.q_hi || "");
-                CKEDITOR.instances.editor_exp.setData(data.exp || "");
-                document.getElementsByName('oa')[0].value = data.oa || "";
-                document.getElementsByName('ob')[0].value = data.ob || "";
-                document.getElementsByName('oc')[0].value = data.oc || "";
-                document.getElementsByName('od')[0].value = data.od || "";
-                document.getElementsByName('ans')[0].value = data.ans || "A";
-                document.getElementById('ai-btn').innerText = "Generate in Editor";
-            });
+                body: JSON.stringify({topic: n, count: c, topic_id: i})
+            }).then(() => location.reload());
         }
     </script>
 </body>
