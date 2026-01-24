@@ -43,12 +43,19 @@ ai_model = get_best_model()
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True)
-    subcats = db.relationship('SubCategory', backref='parent', lazy=True)
+    subcategories = db.relationship('SubCategory', backref='category', lazy=True)
 
 class SubCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
+    topics = db.relationship('Topic', backref='subcategory', lazy=True)
+
+class Topic(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    subcategory_id = db.Column(db.Integer, db.ForeignKey('subcategory.id'))
+    questions = db.relationship('Question', backref='topic', lazy=True)
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -60,6 +67,8 @@ class Question(db.Model):
     od = db.Column(db.String(200))
     ans = db.Column(db.String(5))
     exp = db.Column(db.Text)
+    # Question ab seedhe 'Topic' se judega
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
 
 # --- ROUTES ---
 
