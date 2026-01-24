@@ -7,6 +7,8 @@
         .admin-card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .form-label { font-weight: bold; display: block; margin-bottom: 5px; margin-top: 10px; }
         .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .id-badge { background: #e3f2fd; color: #0d47a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; }
+        .structure-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; height: 250px; overflow-y: auto; }
     </style>
 </head>
 <body style="font-family: Arial; padding: 30px; background: #f0f2f5;">
@@ -25,6 +27,35 @@
             <input type="number" name="parent_id" placeholder="Parent ID" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100px;">
             <button type="submit" style="background: #4caf50; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px;">Add Structure</button>
         </form>
+    </div>
+
+    <div class="admin-card" style="border-top: 4px solid #2196f3;">
+        <h4 style="color: #1976d2; margin-top: 0;">📋 Current Structure & IDs</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <strong>Categories (Dada):</strong>
+                <div class="structure-box">
+                    <ul style="padding-left: 20px;">
+                        {% for cat in categories %}
+                        <li>{{ cat.name }} <span class="id-badge">ID: {{ cat.id }}</span></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div>
+                <strong>SubCategories (Pita):</strong>
+                <div class="structure-box">
+                    <ul style="padding-left: 20px;">
+                        {% for cat in categories %}
+                            {% for sub in cat.subcategories %}
+                            <li>{{ sub.name }} <span class="id-badge">ID: {{ sub.id }}</span> <small>(Parent Cat: {{ cat.id }})</small></li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <p style="font-size: 12px; color: #666; margin-top: 10px;">* Topic banane ke liye sahi <b>SubCategory ID</b> ka upyog karein.</p>
     </div>
 
     <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ff9800;">
@@ -132,39 +163,32 @@
         CKEDITOR.replace('editor_hi');
         CKEDITOR.replace('editor_exp');
 
-        // --- CASCADING DROPDOWN LOGIC ---
-        
         function loadSubCats() {
             let catId = document.getElementById('main_cat').value;
             let subSelect = document.getElementById('sub_cat');
+            if(!catId) return;
             subSelect.innerHTML = '<option>Loading...</option>';
-            
             fetch('/get_subcats/' + catId)
             .then(res => res.json())
             .then(data => {
                 subSelect.innerHTML = '<option value="">-- Select SubCat --</option>';
-                data.forEach(s => {
-                    subSelect.innerHTML += `<option value="${s.id}">${s.name} (ID: ${s.id})</option>`;
-                });
+                data.forEach(s => { subSelect.innerHTML += `<option value="${s.id}">${s.name} (ID: ${s.id})</option>`; });
             });
         }
 
         function loadTopics() {
             let subId = document.getElementById('sub_cat').value;
             let topicSelect = document.getElementById('topic_id_final');
+            if(!subId) return;
             topicSelect.innerHTML = '<option>Loading...</option>';
-            
             fetch('/get_topics/' + subId)
             .then(res => res.json())
             .then(data => {
                 topicSelect.innerHTML = '<option value="">-- Select Topic --</option>';
-                data.forEach(t => {
-                    topicSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                });
+                data.forEach(t => { topicSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`; });
             });
         }
 
-        // AI Functions (As before)
         function generateBulk() {
             let topic = document.getElementById('bulk-topic').value;
             let count = document.getElementById('bulk-count').value;
