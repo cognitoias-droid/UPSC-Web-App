@@ -39,6 +39,16 @@
     </div>
     {% endfor %}
 </div>
-
+<div class="mt-3 p-3 bg-light border-start border-primary border-4">
+    <strong>Original Explanation:</strong><br>
+    {{ r.question.exp | safe }}
+    
+    <hr>
+    <button class="btn btn-sm btn-info" onclick="getAIDeepExplanation('{{ r.question.id }}')">
+        ✨ AI Se Deeply Samjhein (Beta)
+    </button>
+    <div id="ai-deep-{{ r.question.id }}" class="mt-3 text-secondary small" style="display:none; background: #fdfdfd; padding: 10px; border: 1px dashed #17a2b8;">
+        </div>
+</div>
 </body>
 </html>
