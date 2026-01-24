@@ -178,5 +178,32 @@ def submit_test():
                            score=score, 
                            total=total, 
                            results=results_summary)
+    # Category, SubCategory aur Topic banane ke routes
+@app.route("/admin/add_structure", methods=["POST"])
+def add_structure():
+    type = request.form.get("type") # category, subcat, ya topic
+    name = request.form.get("name")
+    parent_id = request.form.get("parent_id") # Subcat ke liye Category ID, Topic ke liye Subcat ID
+
+    if type == "category":
+        db.session.add(Category(name=name))
+    elif type == "subcat":
+        db.session.add(SubCategory(name=name, category_id=parent_id))
+    elif type == "topic":
+        db.session.add(Topic(name=name, subcategory_id=parent_id))
+    
+    db.session.commit()
+    return redirect(url_for('admin_dashboard'))
+
+# API: Kisi category ki subcategories mangwane ke liye (JavaScript ke liye)
+@app.route("/get_subcats/<int:cat_id>")
+def get_subcats(cat_id):
+    subs = SubCategory.query.filter_by(category_id=cat_id).all()
+    return jsonify([{"id": s.id, "name": s.name} for s in subs])
+
+@app.route("/get_topics/<int:sub_id>")
+def get_topics(sub_id):
+    tops = Topic.query.filter_by(subcategory_id=sub_id).all()
+    return jsonify([{"id": t.id, "name": t.name} for t in tops])
 if __name__ == "__main__":
     app.run(debug=True)
