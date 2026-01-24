@@ -7,34 +7,29 @@
         .header { text-align: center; margin-bottom: 40px; padding: 40px; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .header h1 { color: #1a73e8; margin: 0; font-size: 2.5rem; }
         
-        .category-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
-        .category-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; border-top: 5px solid #1a73e8; }
-        .category-card:hover { transform: translateY(-5px); }
+        .category-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; }
+        .category-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-top: 5px solid #1a73e8; }
         
         .cat-title { background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #eee; font-weight: bold; font-size: 1.2rem; color: #2c3e50; }
         .subcat-list { padding: 15px 20px; }
-        .subcat-item { margin-bottom: 15px; }
-        .subcat-name { font-weight: 600; color: #5f6368; display: block; margin-bottom: 8px; font-size: 0.95rem; }
+        .subcat-item { margin-bottom: 20px; border-bottom: 1px dashed #ddd; padding-bottom: 10px; }
+        .subcat-item:last-child { border-bottom: none; }
+        
+        .subcat-name { font-weight: 600; color: #5f6368; display: block; margin-bottom: 10px; font-size: 1rem; }
         
         .topic-link { 
-            display: inline-block; background: #eef2ff; color: #4e73df; padding: 5px 12px; 
-            border-radius: 20px; margin: 3px; font-size: 0.85rem; text-decoration: none; transition: 0.2s;
+            display: inline-block; background: #eef2ff; color: #4e73df; padding: 6px 15px; 
+            border-radius: 20px; margin: 5px; font-size: 0.85rem; text-decoration: none; border: 1px solid #d1d9ff;
         }
         .topic-link:hover { background: #4e73df; color: white; }
-        
-        .test-btn-main { 
-            display: block; width: fit-content; margin: 30px auto; background: #1a73e8; 
-            color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;
-        }
-        .admin-link { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-size: 12px; }
+        .no-data { color: #999; font-style: italic; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>Cognito IAS</h1>
-        <p>Aapki UPSC Taiyari ka Digital Saathi</p>
-        <a href="/test" class="test-btn-main">Quick 5 Questions Test</a>
+        <p>UPSC Preparation Reimagined</p>
     </div>
 
     <div class="category-grid">
@@ -42,26 +37,38 @@
         <div class="category-card">
             <div class="cat-title">📚 {{ cat.name }}</div>
             <div class="subcat-list">
-                {% for sub in cat.subcategories %}
-                <div class="subcat-item">
-                    <span class="subcat-name">📂 {{ sub.name }}</span>
-                    <div class="topics">
-                        {% for topic in sub.topics %}
-                        <a href="/test/topic/{{ topic.id }}" class="topic-link">
-                            {{ topic.name }} ({{ topic.questions|length }})
-                        </a>
-                        {% endfor %}
+                
+                {% if cat.subcategories %}
+                    {% for sub in cat.subcategories %}
+                    <div class="subcat-item">
+                        <span class="subcat-name">📂 {{ sub.name }}</span>
+                        <div class="topics">
+                            {% if sub.topics %}
+                                {% for topic in sub.topics %}
+                                <a href="/test/topic/{{ topic.id }}" class="topic-link">
+                                    {{ topic.name }} ({{ topic.questions|length }})
+                                </a>
+                                {% endfor %}
+                            {% else %}
+                                <span class="no-data">Isme abhi topics nahi hain.</span>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-                {% empty %}
-                <p class="text-muted small">Abhi koi subcategory nahi hai.</p>
-                {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <p class="no-data">Is category mein abhi koi subcategory nahi hai.</p>
+                {% endif %}
+
             </div>
+        </div>
+        {% else %}
+        <div style="text-align: center; grid-column: 1/-1; padding: 50px;">
+            <h3>Dukan khali hai! 😊</h3>
+            <p>Admin panel mein jaakar Subjects aur Topics jodiye.</p>
+            <a href="/admin" style="color: blue; text-decoration: underline;">Admin Dashboard</a>
         </div>
         {% endfor %}
     </div>
-
-    <a href="/admin" class="admin-link">Admin Panel</a>
 
 </body>
 </html>
