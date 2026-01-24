@@ -7,8 +7,9 @@
         .admin-card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .form-label { font-weight: bold; display: block; margin-bottom: 5px; margin-top: 10px; }
         .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .id-badge { background: #e3f2fd; color: #0d47a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; }
-        .structure-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; height: 250px; overflow-y: auto; }
+        .id-badge { background: #e3f2fd; color: #0d47a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 12px; }
+        .structure-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; }
+        .topic-badge { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
     </style>
 </head>
 <body style="font-family: Arial; padding: 30px; background: #f0f2f5;">
@@ -23,63 +24,70 @@
                 <option value="subcat">New SubCategory (under Cat ID)</option>
                 <option value="topic">New Topic (under SubCat ID)</option>
             </select>
-            <input type="text" name="name" placeholder="Name (e.g. Ancient History)" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+            <input type="text" name="name" placeholder="Name (e.g. Mauryan Empire)" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
             <input type="number" name="parent_id" placeholder="Parent ID" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100px;">
             <button type="submit" style="background: #4caf50; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px;">Add Structure</button>
         </form>
     </div>
 
     <div class="admin-card" style="border-top: 4px solid #2196f3;">
-        <h4 style="color: #1976d2; margin-top: 0;">📋 Current Structure & IDs</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <h4 style="color: #1976d2; margin-top: 0;">📋 Hierarchy Explorer (Get IDs for Bulk AI)</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
             <div>
-                <strong>Categories (Dada):</strong>
+                <strong>1. Categories (Dada):</strong>
                 <div class="structure-box">
-                    <ul style="padding-left: 20px;">
+                    <ul style="padding-left: 15px;">
                         {% for cat in categories %}
-                        <li>{{ cat.name }} <span class="id-badge">ID: {{ cat.id }}</span></li>
+                        <li style="margin-bottom:5px;">{{ cat.name }} <span class="id-badge">ID: {{ cat.id }}</span></li>
                         {% endfor %}
                     </ul>
                 </div>
             </div>
             <div>
-                <strong>SubCategories (Pita):</strong>
+                <strong>2. SubCategories (Pita):</strong>
                 <div class="structure-box">
-                    <ul style="padding-left: 20px;">
+                    <ul style="padding-left: 15px;">
                         {% for cat in categories %}
                             {% for sub in cat.subcategories %}
-                            <li>{{ sub.name }} <span class="id-badge">ID: {{ sub.id }}</span> <small>(Parent Cat: {{ cat.id }})</small></li>
+                            <li style="margin-bottom:5px;">{{ sub.name }} <span class="id-badge">ID: {{ sub.id }}</span> <br><small>Under Cat: {{ cat.id }}</small></li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div>
+                <strong>3. Topics (Beta):</strong>
+                <div class="structure-box">
+                    <ul style="padding-left: 15px;">
+                        {% for cat in categories %}
+                            {% for sub in cat.subcategories %}
+                                {% for top in sub.topics %}
+                                <li style="margin-bottom:5px;">{{ top.name }} <span class="id-badge topic-badge">ID: {{ top.id }}</span> <br><small>Under Sub: {{ sub.id }}</small></li>
+                                {% endfor %}
                             {% endfor %}
                         {% endfor %}
                     </ul>
                 </div>
             </div>
         </div>
-        <p style="font-size: 12px; color: #666; margin-top: 10px;">* Topic banane ke liye sahi <b>SubCategory ID</b> ka upyog karein.</p>
-    </div>
-
-    <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ff9800;">
-        <h3>📁 Bulk Upload (CSV)</h3>
-        <form action="/admin/upload_csv" method="POST" enctype="multipart/form-data">
-            <input type="file" name="csv_file" accept=".csv" required>
-            <button type="submit" style="background: #ff9800; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Upload Questions</button>
-        </form>
     </div>
 
     <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #7b1fa2;">
-        <h4 style="margin-top:0; color: #7b1fa2;">🚀 AI Bulk Magic (Direct Save)</h4>
-        <input type="text" id="bulk-topic" placeholder="Topic: e.g. Mauryan Empire" style="width: 50%; padding: 8px;">
-        <input type="number" id="bulk-count" value="5" min="1" max="10" style="width: 50px; padding: 8px;">
-        <button type="button" onclick="generateBulk()" id="bulk-btn" style="padding: 8px 15px; background: #7b1fa2; color: white; border: none; cursor: pointer; border-radius: 4px;">Generate & Save Bulk</button>
+        <h4 style="margin-top:0; color: #7b1fa2;">🚀 AI Bulk Magic (Targeted)</h4>
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
+            <input type="text" id="bulk-topic" placeholder="Topic Name for AI (e.g. Akbar's Policy)" style="padding: 8px;">
+            <input type="number" id="target-topic-id" placeholder="Topic ID (from list above)" style="padding: 8px;">
+            <input type="number" id="bulk-count" value="5" min="1" max="10" style="padding: 8px;">
+        </div>
+        <button type="button" onclick="generateBulk()" id="bulk-btn" style="margin-top: 10px; width: 100%; padding: 10px; background: #7b1fa2; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">Generate & Save to Topic</button>
         <div id="bulk-status" class="mt-2 small"></div>
     </div>
 
     <div class="admin-card" style="border-left: 5px solid green;">
-        <h3>Add New MCQ (Hierarchical Selection)</h3>
-        
+        <h3>Add New MCQ (Manual/Draft)</h3>
         <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-            <p style="margin-top:0;"><strong>✨ AI Draft:</strong> <input type="text" id="ai-topic" placeholder="Topic likhein"> 
-            <button type="button" onclick="askAI()" id="ai-btn" style="background:#1976d2; color:white; border:none; padding:5px 10px; cursor:pointer;">Generate in Editor</button></p>
+            <p style="margin-top:0;"><strong>✨ AI Draft:</strong> <input type="text" id="ai-topic" placeholder="Topic for single draft"> 
+            <button type="button" onclick="askAI()" id="ai-btn" style="background:#1976d2; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Generate in Editor</button></p>
         </div>
 
         <form action="/admin/save_mcq" method="POST">
@@ -87,29 +95,28 @@
                 <div>
                     <label class="form-label text-primary">1. Category</label>
                     <select id="main_cat" onchange="loadSubCats()" class="form-control">
-                        <option value="">-- Select Category --</option>
+                        <option value="">-- Select --</option>
                         {% for cat in categories %}
-                        <option value="{{ cat.id }}">{{ cat.name }} (ID: {{cat.id}})</option>
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
                     <label class="form-label text-primary">2. SubCategory</label>
                     <select id="sub_cat" onchange="loadTopics()" class="form-control">
-                        <option value="">-- Select SubCat --</option>
+                        <option value="">-- Select --</option>
                     </select>
                 </div>
                 <div>
                     <label class="form-label text-primary">3. Final Topic</label>
                     <select id="topic_id_final" name="topic_id" class="form-control" required>
-                        <option value="">-- Select Topic --</option>
+                        <option value="">-- Select --</option>
                     </select>
                 </div>
             </div>
 
             <p class="form-label">English Question:</p>
             <textarea name="q_en" id="editor_en"></textarea>
-            
             <p class="form-label">Hindi Question:</p>
             <textarea name="q_hi" id="editor_hi"></textarea>
 
@@ -168,10 +175,8 @@
             let subSelect = document.getElementById('sub_cat');
             if(!catId) return;
             subSelect.innerHTML = '<option>Loading...</option>';
-            fetch('/get_subcats/' + catId)
-            .then(res => res.json())
-            .then(data => {
-                subSelect.innerHTML = '<option value="">-- Select SubCat --</option>';
+            fetch('/get_subcats/' + catId).then(res => res.json()).then(data => {
+                subSelect.innerHTML = '<option value="">-- Select --</option>';
                 data.forEach(s => { subSelect.innerHTML += `<option value="${s.id}">${s.name} (ID: ${s.id})</option>`; });
             });
         }
@@ -181,24 +186,25 @@
             let topicSelect = document.getElementById('topic_id_final');
             if(!subId) return;
             topicSelect.innerHTML = '<option>Loading...</option>';
-            fetch('/get_topics/' + subId)
-            .then(res => res.json())
-            .then(data => {
-                topicSelect.innerHTML = '<option value="">-- Select Topic --</option>';
+            fetch('/get_topics/' + subId).then(res => res.json()).then(data => {
+                topicSelect.innerHTML = '<option value="">-- Select --</option>';
                 data.forEach(t => { topicSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`; });
             });
         }
 
         function generateBulk() {
-            let topic = document.getElementById('bulk-topic').value;
+            let topicName = document.getElementById('bulk-topic').value;
+            let topicId = document.getElementById('target-topic-id').value;
             let count = document.getElementById('bulk-count').value;
             let btn = document.getElementById('bulk-btn');
-            if(!topic) return alert("Topic likhiye!");
-            btn.innerText = "Processing..."; btn.disabled = true;
+
+            if(!topicName || !topicId) return alert("Topic Name aur Topic ID dono zaroori hain!");
+
+            btn.innerText = "AI Writing Questions..."; btn.disabled = true;
             fetch('/admin/bulk_ai', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({topic: topic, count: count})
+                body: JSON.stringify({topic: topicName, count: count, topic_id: topicId})
             }).then(res => res.json()).then(data => {
                 alert(data.message || data.error);
                 location.reload();
@@ -213,9 +219,7 @@
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({topic: topic})
-            })
-            .then(res => res.json())
-            .then(data => {
+            }).then(res => res.json()).then(data => {
                 CKEDITOR.instances.editor_en.setData(data.q_en || "");
                 CKEDITOR.instances.editor_hi.setData(data.q_hi || "");
                 CKEDITOR.instances.editor_exp.setData(data.exp || "");
