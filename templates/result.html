@@ -35,10 +35,11 @@
             <h5 class="fw-bold">Q{{ loop.index }}. {{ r.question.q_en | safe }}</h5>
             <p class="text-muted small">{{ r.question.q_hi | safe }}</p>
             
-            <div class="p-2 rounded mb-3 {% if r.is_correct %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
-                Aapka Jawab: {{ r.user_ans if r.user_ans else "Nahi Diya" }} 
-                {% if not r.is_correct %}(Sahi Jawab: {{ r.correct_ans }}){% endif %}
-            </div>
+         <div class="p-2 rounded mb-3 {% if r.is_correct %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+          <strong>Aapka Jawab:</strong> {{ r.user_ans if r.user_ans else "Nahi Diya" }} <br> {% if not r.is_correct %}
+        <strong>Sahi Jawab:</strong> {{ r.question.ans }}  {% else %}
+        <strong>Ekdam Sahi!</strong>  {% endif %}
+         </div>
 
             <div class="p-3 bg-light border-start border-primary border-4 mb-2">
                 <strong>Explanation:</strong><br>
