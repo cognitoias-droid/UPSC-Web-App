@@ -73,17 +73,19 @@ class Question(db.Model):
 
 @app.route("/")
 def home():
-    # Home page par hum categories dikhayenge taaki baccha select kar sake
-    return render_template("home.html", categories=Category.query.all())
+    # Home page par hum categories dikhayenge
+    cats = Category.query.all()
+    return render_template("home.html", categories=cats)
 
 @app.route("/admin")
 def admin_dashboard():
     all_qs = Question.query.order_by(Question.id.desc()).all()
-    return render_template("admin.html", categories=Category.query.all(), questions=all_qs, q_count=len(all_qs))
+    cats = Category.query.all()
+    return render_template("admin.html", categories=cats, questions=all_qs, q_count=len(all_qs))
 
 @app.route("/admin/save_mcq", methods=["POST"])
 def save_mcq():
-    # Ab hum topic_id bhi save karenge
+    topic_id = request.form.get("topic_id")
     new_q = Question(
         q_en=request.form.get("q_en"), 
         q_hi=request.form.get("q_hi"),
@@ -93,18 +95,28 @@ def save_mcq():
         od=request.form.get("od"),
         ans=request.form.get("ans"), 
         exp=request.form.get("exp"),
-        topic_id=request.form.get("topic_id") # Naya badlav
+        topic_id=int(topic_id) if topic_id else None
     )
     db.session.add(new_q)
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
+
+@app.route("/admin/generate_ai", methods=["POST"])
+def generate_ai():
+    try:
+        topic = request.json.get("topic")
+        prompt = f"Create 1 UPSC MCQ on {topic}. Return ONLY JSON: {{'q_en':'', 'q_hi':'', 'oa':'', 'ob':'', 'oc':'', 'od':'', 'ans':'A/B/C/D', 'exp':''}}"
+        response = ai_model.generate_content(prompt)
+        text = response.text.strip().replace('```json', '').replace('```', '')
+        return jsonify(json.loads(text))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/admin/bulk_ai", methods=["POST"])
 def bulk_ai():
     try:
         topic_name = request.json.get("topic")
         count = int(request.json.get("count", 3))
-        # AI se sawal mangwana
         prompt = f"Create {count} UPSC MCQs on '{topic_name}'. Return ONLY a JSON list: [{{'q_en':'', 'q_hi':'', 'oa':'', 'ob':'', 'oc':'', 'od':'', 'ans':'A/B/C/D', 'exp':''}}]"
         response = ai_model.generate_content(prompt)
         raw_text = response.text.strip().replace('```json', '').replace('```', '')
@@ -115,7 +127,6 @@ def bulk_ai():
                 q_en=item['q_en'], q_hi=item['q_hi'],
                 oa=item['oa'], ob=item['ob'], oc=item['oc'], od=item['od'],
                 ans=item['ans'], exp=item['exp']
-                # Note: Bulk AI mein topic_id manually baad mein assign karna hoga ya Topic ID mangwani hogi
             ))
         db.session.commit()
         return jsonify({"message": f"Safalta! {len(questions_data)} sawal jodh diye gaye hain."})
@@ -150,13 +161,20 @@ def add_structure():
 
 @app.route("/system_init")
 def system_init():
+    db.drop_all() # Purana kharab structure saaf karne ke liye
     db.create_all()
-    return "SUCCESS: Tijori taiyar hai!"
+    return "SUCCESS: Tijori naye structure ke saath taiyar hai!"
 
 @app.route("/test")
 def take_test():
-    # Filhaal hum random sawal dikha rahe hain
     questions = Question.query.limit(5).all()
+    return render_template("test.html", questions=questions)
+
+@app.route("/test/topic/<int:topic_id>")
+def test_by_topic(topic_id):
+    questions = Question.query.filter_by(topic_id=topic_id).all()
+    if not questions:
+        return "Is topic mein abhi koi sawal nahi hain."
     return render_template("test.html", questions=questions)
 
 @app.route("/submit_test", methods=["POST"])
@@ -171,13 +189,6 @@ def submit_test():
         if is_correct: score += 1
         results_summary.append({"question": question, "user_ans": user_ans, "is_correct": is_correct})
     return render_template("result.html", score=score, total=len(q_ids), results=results_summary)
-@app.route("/test/topic/<int:topic_id>")
-def test_by_topic(topic_id):
-    # Sirf us specific topic ke sawal nikalna
-    questions = Question.query.filter_by(topic_id=topic_id).all()
-    if not questions:
-        return "Is topic mein abhi koi sawal nahi hain. Admin se sampark karein!"
-    return render_template("test.html", questions=questions)
 
 if __name__ == "__main__":
     app.run(debug=True)
