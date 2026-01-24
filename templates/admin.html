@@ -10,7 +10,6 @@
         .id-badge { background: #e3f2fd; color: #0d47a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 12px; }
         .structure-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; }
         .del-btn { color: #dc3545; text-decoration: none; font-weight: bold; margin-left: 10px; cursor: pointer; }
-        .del-btn:hover { color: #a71d2a; }
     </style>
 </head>
 <body style="font-family: Arial; padding: 30px; background: #f0f2f5;">
@@ -38,10 +37,7 @@
                 <div class="structure-box">
                     <ul style="padding-left: 15px;">
                         {% for cat in categories %}
-                        <li style="margin-bottom:8px;">
-                            {{ cat.name }} <span class="id-badge">ID: {{ cat.id }}</span>
-                            <a href="/admin/delete_structure/category/{{ cat.id }}" class="del-btn" onclick="return confirm('Dhyan dein! Is Category ke saare sawal aur topics delete ho jayenge. Sure?')">✖</a>
-                        </li>
+                        <li style="margin-bottom:8px;">{{ cat.name }} <span class="id-badge">ID: {{ cat.id }}</span> <a href="/admin/delete_structure/category/{{ cat.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -52,10 +48,7 @@
                     <ul style="padding-left: 15px;">
                         {% for cat in categories %}
                             {% for sub in cat.subcategories %}
-                            <li style="margin-bottom:8px;">
-                                {{ sub.name }} <span class="id-badge">ID: {{ sub.id }}</span>
-                                <a href="/admin/delete_structure/subcat/{{ sub.id }}" class="del-btn" onclick="return confirm('Is SubCategory ko delete karein?')">✖</a>
-                            </li>
+                            <li style="margin-bottom:8px;">{{ sub.name }} <span class="id-badge">ID: {{ sub.id }}</span> <a href="/admin/delete_structure/subcat/{{ sub.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></li>
                             {% endfor %}
                         {% endfor %}
                     </ul>
@@ -68,10 +61,7 @@
                         {% for cat in categories %}
                             {% for sub in cat.subcategories %}
                                 {% for top in sub.topics %}
-                                <li style="margin-bottom:8px;">
-                                    {{ top.name }} <span class="id-badge">ID: {{ top.id }}</span>
-                                    <a href="/admin/delete_structure/topic/{{ top.id }}" class="del-btn" onclick="return confirm('Is Topic ke saare sawal mita dein?')">✖</a>
-                                </li>
+                                <li style="margin-bottom:8px;">{{ top.name }} <span class="id-badge">ID: {{ top.id }}</span> <a href="/admin/delete_structure/topic/{{ top.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></li>
                                 {% endfor %}
                             {% endfor %}
                         {% endfor %}
@@ -84,15 +74,22 @@
     <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #7b1fa2;">
         <h4 style="margin-top:0; color: #7b1fa2;">🚀 AI Bulk Magic</h4>
         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-            <input type="text" id="bulk-topic" placeholder="AI Topic (e.g. Mughal Architecture)" style="padding: 8px;">
-            <input type="number" id="target-topic-id" placeholder="Target Topic ID" style="padding: 8px;">
+            <input type="text" id="bulk-topic" placeholder="Topic Name" style="padding: 8px;">
+            <input type="number" id="target-topic-id" placeholder="Topic ID" style="padding: 8px;">
             <input type="number" id="bulk-count" value="5" min="1" max="10" style="padding: 8px;">
         </div>
         <button type="button" onclick="generateBulk()" id="bulk-btn" style="margin-top: 10px; width: 100%; padding: 10px; background: #7b1fa2; color: white; border: none; cursor: pointer; border-radius: 4px;">Generate & Save</button>
     </div>
 
+    <div style="background: #e1f5fe; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #03a9f4;">
+        <h4 style="color: #0288d1; margin-top: 0;">🗺️ CognitoIAS Mapping Specialist (AI)</h4>
+        <p style="font-size: 13px;">Region ka naam likhein aur AI mapping sawal banayega (Draft mode).</p>
+        <input type="text" id="map-region" placeholder="Region: e.g. Southeast Asia, Mediterranean Sea" style="width: 60%; padding: 8px;">
+        <button type="button" id="map-btn" onclick="generateMapMCQ()" style="padding: 8px 15px; background: #03a9f4; color: white; border: none; cursor: pointer; border-radius: 4px;">Generate Mapping MCQ</button>
+    </div>
+
     <div class="admin-card" style="border-left: 5px solid green;">
-        <h3>Add MCQ</h3>
+        <h3>Add/Edit MCQ</h3>
         <form action="/admin/save_mcq" method="POST">
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                 <select id="main_cat" onchange="loadSubCats()" class="form-control">
@@ -109,10 +106,10 @@
             <textarea name="q_en" id="editor_en"></textarea>
             <textarea name="q_hi" id="editor_hi"></textarea>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                <input type="text" name="oa" placeholder="Opt A" required class="form-control">
-                <input type="text" name="ob" placeholder="Opt B" required class="form-control">
-                <input type="text" name="oc" placeholder="Opt C" required class="form-control">
-                <input type="text" name="od" placeholder="Opt D" required class="form-control">
+                <input type="text" name="oa" placeholder="Opt A" class="form-control">
+                <input type="text" name="ob" placeholder="Opt B" class="form-control">
+                <input type="text" name="oc" placeholder="Opt C" class="form-control">
+                <input type="text" name="od" placeholder="Opt D" class="form-control">
             </div>
             <select name="ans" class="form-control" style="width: 100px; margin-top: 10px;">
                 <option value="A">A</option><option value="B">B</option>
@@ -123,35 +120,33 @@
         </form>
     </div>
 
-    <div class="admin-card">
-        <h3 style="color: #2c3e50;">📚 Questions Bank ({{ q_count }})</h3>
-        <table border="1" style="width: 100%; border-collapse: collapse; font-size: 14px;">
-            <thead style="background: #f8f9fa;">
-                <tr>
-                    <th>ID</th>
-                    <th>Question</th>
-                    <th>Ans</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for q in questions %}
-                <tr>
-                    <td style="text-align:center;">{{ q.id }}</td>
-                    <td>{{ q.q_en | safe }}<br><small>{{ q.q_hi | safe }}</small></td>
-                    <td style="text-align:center;">{{ q.ans }}</td>
-                    <td style="text-align:center;">
-                        <a href="/admin/delete_question/{{ q.id }}" class="del-btn" onclick="return confirm('Is sawal ko mita dein?')">Delete</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
     <script>
         CKEDITOR.replace('editor_en'); CKEDITOR.replace('editor_hi'); CKEDITOR.replace('editor_exp');
-        
+
+        // Mapping AI Function
+        function generateMapMCQ() {
+            let region = document.getElementById('map-region').value;
+            let btn = document.getElementById('map-btn');
+            if(!region) return alert("Region likhiye!");
+            btn.innerText = "Searching Map Data..."; btn.disabled = true;
+
+            fetch('/admin/generate_mapping_ai', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({topic: region})
+            }).then(res => res.json()).then(data => {
+                CKEDITOR.instances.editor_en.setData(data.q_en);
+                CKEDITOR.instances.editor_hi.setData(data.q_hi);
+                CKEDITOR.instances.editor_exp.setData(data.exp);
+                document.getElementsByName('oa')[0].value = data.oa;
+                document.getElementsByName('ob')[0].value = data.ob;
+                document.getElementsByName('oc')[0].value = data.oc;
+                document.getElementsByName('od')[0].value = data.od;
+                document.getElementsByName('ans')[0].value = data.ans;
+                btn.innerText = "Generate Mapping MCQ"; btn.disabled = false;
+            });
+        }
+
         function loadSubCats() {
             let catId = document.getElementById('main_cat').value;
             fetch('/get_subcats/' + catId).then(res => res.json()).then(data => {
