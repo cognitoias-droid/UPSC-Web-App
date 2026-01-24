@@ -67,135 +67,61 @@ class Question(db.Model):
     od = db.Column(db.String(200))
     ans = db.Column(db.String(5))
     exp = db.Column(db.Text)
-    # Question ab seedhe 'Topic' se judega
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
 
 # --- ROUTES ---
 
 @app.route("/")
 def home():
-    return render_template("home.html", questions=Question.query.all(), categories=Category.query.all())
-
-@app.route("/system_init")
-def system_init():
-    db.create_all()
-    return "SUCCESS: Tijori taiyar hai!"
+    # Home page par hum categories dikhayenge taaki baccha select kar sake
+    return render_template("home.html", categories=Category.query.all())
 
 @app.route("/admin")
 def admin_dashboard():
-    # Saare sawal nikalna taaki table mein dikhe
     all_qs = Question.query.order_by(Question.id.desc()).all()
     return render_template("admin.html", categories=Category.query.all(), questions=all_qs, q_count=len(all_qs))
 
 @app.route("/admin/save_mcq", methods=["POST"])
 def save_mcq():
+    # Ab hum topic_id bhi save karenge
     new_q = Question(
-        q_en=request.form.get("q_en"), q_hi=request.form.get("q_hi"),
-        oa=request.form.get("oa"), ob=request.form.get("ob"),
-        oc=request.form.get("oc"), od=request.form.get("od"),
-        ans=request.form.get("ans"), exp=request.form.get("exp")
+        q_en=request.form.get("q_en"), 
+        q_hi=request.form.get("q_hi"),
+        oa=request.form.get("oa"), 
+        ob=request.form.get("ob"),
+        oc=request.form.get("oc"), 
+        od=request.form.get("od"),
+        ans=request.form.get("ans"), 
+        exp=request.form.get("exp"),
+        topic_id=request.form.get("topic_id") # Naya badlav
     )
     db.session.add(new_q)
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
-@app.route("/admin/generate_ai", methods=["POST"])
-def generate_ai():
-    try:
-        topic = request.json.get("topic")
-        prompt = f"Create 1 UPSC MCQ on {topic}. Return ONLY JSON: {{'q_en':'', 'q_hi':'', 'oa':'', 'ob':'', 'oc':'', 'od':'', 'ans':'A/B/C/D', 'exp':''}}"
-        response = ai_model.generate_content(prompt)
-        text = response.text.strip().replace('```json', '').replace('```', '')
-        return jsonify(json.loads(text))
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 @app.route("/admin/bulk_ai", methods=["POST"])
 def bulk_ai():
     try:
-        topic = request.json.get("topic")
+        topic_name = request.json.get("topic")
         count = int(request.json.get("count", 3))
-        prompt = f"Create {count} UPSC MCQs on '{topic}'. Return ONLY a JSON list of objects: [{{'q_en':'', 'q_hi':'', 'oa':'', 'ob':'', 'oc':'', 'od':'', 'ans':'A/B/C/D', 'exp':''}}]"
+        # AI se sawal mangwana
+        prompt = f"Create {count} UPSC MCQs on '{topic_name}'. Return ONLY a JSON list: [{{'q_en':'', 'q_hi':'', 'oa':'', 'ob':'', 'oc':'', 'od':'', 'ans':'A/B/C/D', 'exp':''}}]"
         response = ai_model.generate_content(prompt)
         raw_text = response.text.strip().replace('```json', '').replace('```', '')
         questions_data = json.loads(raw_text)
+        
         for item in questions_data:
             db.session.add(Question(
                 q_en=item['q_en'], q_hi=item['q_hi'],
                 oa=item['oa'], ob=item['ob'], oc=item['oc'], od=item['od'],
                 ans=item['ans'], exp=item['exp']
+                # Note: Bulk AI mein topic_id manually baad mein assign karna hoga ya Topic ID mangwani hogi
             ))
         db.session.commit()
         return jsonify({"message": f"Safalta! {len(questions_data)} sawal jodh diye gaye hain."})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/admin/upload_csv", methods=["POST"])
-def upload_csv():
-    file = request.files.get('csv_file')
-    if not file: return "File nahi mili!", 400
-    csv_file = TextIOWrapper(file, encoding='utf-8')
-    reader = csv.DictReader(csv_file)
-    for row in reader:
-        db.session.add(Question(
-            q_en=row['q_en'], q_hi=row.get('q_hi', ''),
-            oa=row['oa'], ob=row['ob'], oc=row['oc'], od=row['od'],
-            ans=row['ans'], exp=row.get('exp', '')
-        ))
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-@app.route("/test")
-def take_test():
-    questions = Question.query.limit(5).all()
-    return render_template("test.html", questions=questions)
-@app.route("/submit_test", methods=["POST"])
-def submit_test():
-    q_ids = request.form.getlist("question_ids") # Jo IDs test mein thi
-    score = 0
-    total = len(q_ids)
-    results_summary = []
-
-    for q_id in q_ids:
-        question = Question.query.get(int(q_id))
-        user_ans = request.form.get(f"ans_{q_id}") # Student ka answer
-        correct_ans = question.ans # Database ka sahi answer
-
-        is_correct = (user_ans == correct_ans)
-        if is_correct:
-            score += 1
-
-        # Summary banana taaki baad mein explanation dikha sakein
-        results_summary.append({
-            "question": question,
-            "user_ans": user_ans,
-            "correct_ans": correct_ans,
-            "is_correct": is_correct
-        })
-
-    # Ab hum result page dikhayenge
-    return render_template("result.html", 
-                           score=score, 
-                           total=total, 
-                           results=results_summary)
-    # Category, SubCategory aur Topic banane ke routes
-@app.route("/admin/add_structure", methods=["POST"])
-def add_structure():
-    type = request.form.get("type") # category, subcat, ya topic
-    name = request.form.get("name")
-    parent_id = request.form.get("parent_id") # Subcat ke liye Category ID, Topic ke liye Subcat ID
-
-    if type == "category":
-        db.session.add(Category(name=name))
-    elif type == "subcat":
-        db.session.add(SubCategory(name=name, category_id=parent_id))
-    elif type == "topic":
-        db.session.add(Topic(name=name, subcategory_id=parent_id))
-    
-    db.session.commit()
-    return redirect(url_for('admin_dashboard'))
-
-# API: Kisi category ki subcategories mangwane ke liye (JavaScript ke liye)
 @app.route("/get_subcats/<int:cat_id>")
 def get_subcats(cat_id):
     subs = SubCategory.query.filter_by(category_id=cat_id).all()
@@ -205,5 +131,46 @@ def get_subcats(cat_id):
 def get_topics(sub_id):
     tops = Topic.query.filter_by(subcategory_id=sub_id).all()
     return jsonify([{"id": t.id, "name": t.name} for t in tops])
+
+@app.route("/admin/add_structure", methods=["POST"])
+def add_structure():
+    stype = request.form.get("type")
+    name = request.form.get("name")
+    parent_id = request.form.get("parent_id")
+
+    if stype == "category":
+        db.session.add(Category(name=name))
+    elif stype == "subcat":
+        db.session.add(SubCategory(name=name, category_id=parent_id))
+    elif stype == "topic":
+        db.session.add(Topic(name=name, subcategory_id=parent_id))
+    
+    db.session.commit()
+    return redirect(url_for('admin_dashboard'))
+
+@app.route("/system_init")
+def system_init():
+    db.create_all()
+    return "SUCCESS: Tijori taiyar hai!"
+
+@app.route("/test")
+def take_test():
+    # Filhaal hum random sawal dikha rahe hain
+    questions = Question.query.limit(5).all()
+    return render_template("test.html", questions=questions)
+
+@app.route("/submit_test", methods=["POST"])
+def submit_test():
+    q_ids = request.form.getlist("question_ids")
+    score = 0
+    results_summary = []
+    for q_id in q_ids:
+        question = Question.query.get(int(q_id))
+        user_ans = request.form.get(f"ans_{q_id}")
+        is_correct = (user_ans == question.ans)
+        if is_correct: score += 1
+        results_summary.append({"question": question, "user_ans": user_ans, "is_correct": is_correct})
+    return render_template("result.html", score=score, total=len(q_ids), results=results_summary)
+
 if __name__ == "__main__":
     app.run(debug=True)
