@@ -93,12 +93,34 @@ def save_mcq():
         q_en=request.form.get("q_en"), q_hi=request.form.get("q_hi"),
         oa=request.form.get("oa"), ob=request.form.get("ob"),
         oc=request.form.get("oc"), od=request.form.get("od"),
-        ans=request.form.get("ans"), exp=request.form.get("exp"),
+        ans=request.form.get("ans").strip().upper(), 
+        exp=request.form.get("exp"),
         topic_id=int(t_id) if t_id else None
     )
     db.session.add(new_q)
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
+
+@app.route("/admin/generate_ai", methods=["POST"])
+def generate_ai():
+    try:
+        topic = request.json.get("topic")
+        prompt = f"""Create 1 high-quality UPSC MCQ on {topic}. 
+        If it's a statement-based question, use <br> tag for each statement to show them in NEW LINES.
+        Example format for q_en: 'Consider the following:<br>1. Statement X<br>2. Statement Y'
+        Return ONLY a JSON object: 
+        {{
+            "q_en": "Question in English with <br> for statements",
+            "q_hi": "Hindi translation with <br> for statements",
+            "oa": "Option A", "ob": "Option B", "oc": "Option C", "od": "Option D",
+            "ans": "A", 
+            "exp": "Detailed explanation with <br> for points"
+        }}"""
+        response = ai_model.generate_content(prompt)
+        text = response.text.strip().replace('```json', '').replace('```', '')
+        return jsonify(json.loads(text))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/admin/bulk_ai", methods=["POST"])
 def bulk_ai():
@@ -108,7 +130,7 @@ def bulk_ai():
         topic_id = data.get("topic_id")
         count = int(data.get("count", 3))
 
-        prompt = f"Create {count} UPSC MCQs on '{topic_name}'. Return ONLY a JSON list: [{{'q_en':'', 'q_hi':'', 'oa':'', 'ob':'', 'oc':'', 'od':'', 'ans':'A/B/C/D', 'exp':''}}]"
+        prompt = f"Create {count} UPSC MCQs on '{topic_name}' with <br> for statements. Return ONLY a JSON list: [{{'q_en':'', 'q_hi':'', 'oa':'', 'ob':'', 'oc':'', 'od':'', 'ans':'A/B/C/D', 'exp':''}}]"
         response = ai_model.generate_content(prompt)
         raw_text = response.text.strip().replace('```json', '').replace('```', '')
         questions_data = json.loads(raw_text)
@@ -117,7 +139,8 @@ def bulk_ai():
             db.session.add(Question(
                 q_en=item['q_en'], q_hi=item['q_hi'],
                 oa=item['oa'], ob=item['ob'], oc=item['oc'], od=item['od'],
-                ans=item['ans'], exp=item['exp'],
+                ans=item['ans'].strip().upper()[0], # Sirf pehla character 'A' save karein
+                exp=item['exp'],
                 topic_id=int(topic_id) if topic_id else None
             ))
         db.session.commit()
@@ -195,22 +218,19 @@ def submit_test():
         if is_correct: score += 1
         results_summary.append({"question": question, "user_ans": user_ans, "is_correct": is_correct})
     return render_template("result.html", score=score, total=len(q_ids), results=results_summary)
+
 @app.route("/explain_ai/<int:q_id>")
 def explain_ai(q_id):
     try:
         q = Question.query.get(q_id)
-        # AI ko UPSC teacher ke roop mein prompt dena
-        prompt = f"""
-        Analyze this UPSC Question: '{q.q_en}'
+        prompt = f"""Analyze this UPSC Question: '{q.q_en}'
         Correct Answer is: {q.ans}
-        
         Provide a detailed explanation in a simple 'UPSC Coaching Style'. 
         Include:
         1. Context (Is sawal ka background kya hai?)
         2. Detailed Analysis (Sahi jawab kyun sahi hai aur baaki galat kyun hain?)
         3. Extra Info (UPSC ke liye aur kya zaruri hai is topic se?)
-        Use simple Hindi-English mix (Hinglish) as a mentor.
-        """
+        Use simple Hindi-English mix (Hinglish) as a mentor."""
         response = ai_model.generate_content(prompt)
         return jsonify({"explanation": response.text})
     except Exception as e:
