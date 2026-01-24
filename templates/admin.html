@@ -10,7 +10,6 @@
         .structure-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; height: 180px; overflow-y: auto; font-size: 13px; }
         .mapping-box { background: #e1f5fe; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #03a9f4; }
         .bulk-box { background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #7b1fa2; }
-        .btn-save { background: green; color: white; padding: 12px; border: none; margin-top: 20px; width: 100%; cursor: pointer; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body style="font-family: Arial; padding: 30px; background: #f0f2f5;">
@@ -50,7 +49,7 @@
     </div>
 
     <div class="admin-card">
-        <h4 style="color: #1976d2; margin-top:0;">📋 ID Lookup (Bulk AI ke liye zaroori)</h4>
+        <h4 style="color: #1976d2; margin-top:0;">📋 ID Lookup</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div><strong>SubCategories:</strong>
                 <div class="structure-box">
@@ -80,9 +79,9 @@
     </div>
 
     <div class="mapping-box">
-        <h4 style="color: #0288d1; margin-top: 0;">🗺️ Mapping AI Specialist (Draft)</h4>
+        <h4 style="color: #0288d1; margin-top: 0;">🗺️ Mapping AI Draft</h4>
         <div style="display: flex; gap: 10px;">
-            <input type="text" id="map-region" placeholder="Region: e.g. Red Sea" style="flex: 2; padding: 8px;">
+            <input type="text" id="map-region" placeholder="Region: e.g. Black Sea" style="flex: 2; padding: 8px;">
             <input type="number" id="map-topic-id" placeholder="Topic ID" style="flex: 1; padding: 8px;">
             <button type="button" id="map-btn" onclick="generateMapMCQ()" style="background:#03a9f4; color:white; border:none; padding:8px 20px; border-radius:4px; cursor:pointer;">Generate Draft</button>
         </div>
@@ -107,16 +106,14 @@
                 <input type="text" name="oc" placeholder="Opt C" class="form-control">
                 <input type="text" name="od" placeholder="Opt D" class="form-control">
             </div>
-            <select name="ans" class="form-control" style="width: 100px;">
-                <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-            </select>
+            <select name="ans" class="form-control" style="width: 100px;"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>
             <textarea name="exp" id="editor_exp"></textarea>
-            <button type="submit" class="btn-save">SAVE MCQ TO DATABASE</button>
+            <button type="submit" style="background:green; color:white; width:100%; border:none; padding:12px; border-radius:4px; font-weight:bold;">SAVE MCQ</button>
         </form>
     </div>
 
     <div class="admin-card">
-        <h3>📚 Question Bank ({{ q_count }})</h3>
+        <h3>📚 Question Bank (Total: {{ q_count }})</h3>
         <table style="width:100%; border-collapse: collapse;">
             <thead style="background:#eee;"><tr><th>ID</th><th>Question</th><th>Action</th></tr></thead>
             <tbody>
@@ -134,18 +131,34 @@
     <script>
         CKEDITOR.replace('editor_en'); CKEDITOR.replace('editor_hi'); CKEDITOR.replace('editor_exp');
 
-        // Mapping Draft Function
+        function generateBulk() {
+            let topic = document.getElementById('bulk-topic').value;
+            let tId = document.getElementById('target-topic-id').value;
+            let count = document.getElementById('bulk-count').value;
+            let btn = document.getElementById('bulk-btn');
+            if(!topic || !tId) return alert("Topic aur ID bhariye!");
+            btn.innerText = "Processing..."; btn.disabled = true;
+            fetch('/admin/bulk_ai', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({topic: topic, topic_id: tId, count: count})
+            }).then(res => res.json()).then(data => {
+                alert(data.message || data.error);
+                location.reload();
+            });
+        }
+
         function generateMapMCQ() {
             let region = document.getElementById('map-region').value;
             let targetId = document.getElementById('map-topic-id').value;
-            if(!region || !targetId) return alert("Region aur Topic ID bhariye!");
-            document.getElementById('map-btn').innerText = "AI thinking...";
+            let btn = document.getElementById('map-btn');
+            if(!region || !targetId) return alert("Region aur ID bhariye!");
+            btn.innerText = "AI thinking..."; btn.disabled = true;
             fetch('/admin/generate_mapping_ai', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({topic: region})
-            })
-            .then(res => res.json()).then(data => {
+            }).then(res => res.json()).then(data => {
                 CKEDITOR.instances.editor_en.setData(data.q_en);
                 CKEDITOR.instances.editor_hi.setData(data.q_hi);
                 CKEDITOR.instances.editor_exp.setData(data.exp);
@@ -155,22 +168,8 @@
                 document.getElementsByName('od')[0].value = data.od;
                 document.getElementsByName('ans')[0].value = data.ans;
                 document.getElementById('topic_id_final').innerHTML = `<option value="${targetId}" selected>Target ID: ${targetId}</option>`;
-                document.getElementById('map-btn').innerText = "Generate Draft";
+                btn.innerText = "Generate Draft"; btn.disabled = false;
             });
-        }
-
-        // Bulk AI Function
-        function generateBulk() {
-            let topic = document.getElementById('bulk-topic').value;
-            let tId = document.getElementById('target-topic-id').value;
-            let count = document.getElementById('bulk-count').value;
-            if(!topic || !tId) return alert("Topic aur Topic ID dono zaroori hain!");
-            document.getElementById('bulk-btn').innerText = "AI is Writing...";
-            fetch('/admin/bulk_ai', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({topic: topic, topic_id: tId, count: count})
-            }).then(() => location.reload());
         }
 
         function loadSubCats() {
