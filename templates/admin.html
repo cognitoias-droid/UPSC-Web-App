@@ -8,8 +8,12 @@
         .form-label { font-weight: bold; display: block; margin-bottom: 5px; margin-top: 10px; }
         .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         .id-badge { background: #e3f2fd; color: #0d47a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 12px; }
-        .structure-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; }
+        .structure-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; height: 250px; overflow-y: auto; }
         .del-btn { color: #dc3545; text-decoration: none; font-weight: bold; margin-left: 10px; cursor: pointer; }
+        .del-btn:hover { color: #a71d2a; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #f4f4f4; }
     </style>
 </head>
 <body style="font-family: Arial; padding: 30px; background: #f0f2f5;">
@@ -25,71 +29,52 @@
             </select>
             <input type="text" name="name" placeholder="Name" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
             <input type="number" name="parent_id" placeholder="Parent ID" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100px;">
-            <button type="submit" style="background: #4caf50; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px;">Add</button>
+            <button type="submit" style="background: #4caf50; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px;">Add Structure</button>
         </form>
     </div>
 
     <div class="admin-card" style="border-top: 4px solid #2196f3;">
-        <h4 style="color: #1976d2; margin-top: 0;">📋 Hierarchy Explorer & Management</h4>
+        <h4 style="color: #1976d2; margin-top: 0;">📋 Hierarchy & IDs</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
             <div>
-                <strong>1. Categories:</strong>
+                <strong>Categories:</strong>
                 <div class="structure-box">
-                    <ul style="padding-left: 15px;">
-                        {% for cat in categories %}
-                        <li style="margin-bottom:8px;">{{ cat.name }} <span class="id-badge">ID: {{ cat.id }}</span> <a href="/admin/delete_structure/category/{{ cat.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></li>
-                        {% endfor %}
-                    </ul>
+                    {% for cat in categories %}
+                    <div style="margin-bottom:5px;">{{ cat.name }} <span class="id-badge">{{ cat.id }}</span> <a href="/admin/delete_structure/category/{{ cat.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></div>
+                    {% endfor %}
                 </div>
             </div>
             <div>
-                <strong>2. SubCategories:</strong>
+                <strong>SubCategories:</strong>
                 <div class="structure-box">
-                    <ul style="padding-left: 15px;">
-                        {% for cat in categories %}
-                            {% for sub in cat.subcategories %}
-                            <li style="margin-bottom:8px;">{{ sub.name }} <span class="id-badge">ID: {{ sub.id }}</span> <a href="/admin/delete_structure/subcat/{{ sub.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></li>
-                            {% endfor %}
-                        {% endfor %}
-                    </ul>
+                    {% for cat in categories %}{% for sub in cat.subcategories %}
+                    <div style="margin-bottom:5px;">{{ sub.name }} <span class="id-badge">{{ sub.id }}</span> <a href="/admin/delete_structure/subcat/{{ sub.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></div>
+                    {% endfor %}{% endfor %}
                 </div>
             </div>
             <div>
-                <strong>3. Topics:</strong>
+                <strong>Topics:</strong>
                 <div class="structure-box">
-                    <ul style="padding-left: 15px;">
-                        {% for cat in categories %}
-                            {% for sub in cat.subcategories %}
-                                {% for top in sub.topics %}
-                                <li style="margin-bottom:8px;">{{ top.name }} <span class="id-badge">ID: {{ top.id }}</span> <a href="/admin/delete_structure/topic/{{ top.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></li>
-                                {% endfor %}
-                            {% endfor %}
-                        {% endfor %}
-                    </ul>
+                    {% for cat in categories %}{% for sub in cat.subcategories %}{% for top in sub.topics %}
+                    <div style="margin-bottom:5px;">{{ top.name }} <span class="id-badge">{{ top.id }}</span> <a href="/admin/delete_structure/topic/{{ top.id }}" class="del-btn" onclick="return confirm('Sure?')">✖</a></div>
+                    {% endfor %}{% endfor %}{% endfor %}
                 </div>
             </div>
         </div>
-    </div>
-
-    <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #7b1fa2;">
-        <h4 style="margin-top:0; color: #7b1fa2;">🚀 AI Bulk Magic</h4>
-        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-            <input type="text" id="bulk-topic" placeholder="Topic Name" style="padding: 8px;">
-            <input type="number" id="target-topic-id" placeholder="Topic ID" style="padding: 8px;">
-            <input type="number" id="bulk-count" value="5" min="1" max="10" style="padding: 8px;">
-        </div>
-        <button type="button" onclick="generateBulk()" id="bulk-btn" style="margin-top: 10px; width: 100%; padding: 10px; background: #7b1fa2; color: white; border: none; cursor: pointer; border-radius: 4px;">Generate & Save</button>
     </div>
 
     <div style="background: #e1f5fe; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #03a9f4;">
-        <h4 style="color: #0288d1; margin-top: 0;">🗺️ CognitoIAS Mapping Specialist (AI)</h4>
-        <p style="font-size: 13px;">Region ka naam likhein aur AI mapping sawal banayega (Draft mode).</p>
-        <input type="text" id="map-region" placeholder="Region: e.g. Southeast Asia, Mediterranean Sea" style="width: 60%; padding: 8px;">
-        <button type="button" id="map-btn" onclick="generateMapMCQ()" style="padding: 8px 15px; background: #03a9f4; color: white; border: none; cursor: pointer; border-radius: 4px;">Generate Mapping MCQ</button>
+        <h4 style="color: #0288d1; margin-top: 0;">🗺️ Mapping AI Draft Specialist</h4>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="map-region" placeholder="Region: e.g. Black Sea, Red Sea" style="flex: 2; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <input type="number" id="map-topic-id" placeholder="Target Topic ID" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <button type="button" id="map-btn" onclick="generateMapMCQ()" style="padding: 8px 15px; background: #03a9f4; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">Generate Draft</button>
+        </div>
+        <p style="font-size: 11px; color: #555; margin-top: 5px;">* Topic ID upar se dekh kar bharein taaki sawal sahi jagah save ho.</p>
     </div>
 
     <div class="admin-card" style="border-left: 5px solid green;">
-        <h3>Add/Edit MCQ</h3>
+        <h3>Add Question</h3>
         <form action="/admin/save_mcq" method="POST">
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                 <select id="main_cat" onchange="loadSubCats()" class="form-control">
@@ -116,25 +101,53 @@
                 <option value="C">C</option><option value="D">D</option>
             </select>
             <textarea name="exp" id="editor_exp"></textarea>
-            <button type="submit" style="background: green; color: white; padding: 12px; border: none; margin-top: 20px; width: 100%; cursor: pointer; border-radius: 4px;">Save MCQ</button>
+            <button type="submit" style="background: green; color: white; padding: 12px; border: none; margin-top: 20px; width: 100%; cursor: pointer; border-radius: 4px;">Save MCQ To Database</button>
         </form>
+    </div>
+
+    <div class="admin-card">
+        <h3>📚 Questions Bank (Total: {{ q_count }})</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Question</th>
+                    <th>Ans</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in questions %}
+                <tr>
+                    <td>{{ q.id }}</td>
+                    <td>{{ q.q_en | safe }}</td>
+                    <td>{{ q.ans }}</td>
+                    <td><a href="/admin/delete_question/{{ q.id }}" class="del-btn" onclick="return confirm('Mita dein?')">Delete</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
     <script>
         CKEDITOR.replace('editor_en'); CKEDITOR.replace('editor_hi'); CKEDITOR.replace('editor_exp');
 
-        // Mapping AI Function
         function generateMapMCQ() {
             let region = document.getElementById('map-region').value;
+            let targetId = document.getElementById('map-topic-id').value;
             let btn = document.getElementById('map-btn');
-            if(!region) return alert("Region likhiye!");
-            btn.innerText = "Searching Map Data..."; btn.disabled = true;
+
+            if(!region || !targetId) return alert("Region aur Target Topic ID dono zaroori hain!");
+            
+            btn.innerText = "AI Mapping..."; btn.disabled = true;
 
             fetch('/admin/generate_mapping_ai', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({topic: region})
-            }).then(res => res.json()).then(data => {
+            })
+            .then(res => res.json())
+            .then(data => {
                 CKEDITOR.instances.editor_en.setData(data.q_en);
                 CKEDITOR.instances.editor_hi.setData(data.q_hi);
                 CKEDITOR.instances.editor_exp.setData(data.exp);
@@ -143,7 +156,14 @@
                 document.getElementsByName('oc')[0].value = data.oc;
                 document.getElementsByName('od')[0].value = data.od;
                 document.getElementsByName('ans')[0].value = data.ans;
-                btn.innerText = "Generate Mapping MCQ"; btn.disabled = false;
+                
+                // Automatically set the target topic in the manual form
+                document.getElementById('topic_id_final').innerHTML = `<option value="${targetId}" selected>Selected Topic (ID: ${targetId})</option>`;
+                
+                btn.innerText = "Generate Draft"; btn.disabled = false;
+                
+                // Smooth scroll down to the editor
+                document.getElementById('editor_en').scrollIntoView({ behavior: 'smooth' });
             });
         }
 
@@ -162,16 +182,6 @@
                 t.innerHTML = '<option value="">-- Topic --</option>';
                 data.forEach(x => t.innerHTML += `<option value="${x.id}">${x.name}</option>`);
             });
-        }
-        function generateBulk() {
-            let n = document.getElementById('bulk-topic').value;
-            let i = document.getElementById('target-topic-id').value;
-            let c = document.getElementById('bulk-count').value;
-            fetch('/admin/bulk_ai', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({topic: n, count: c, topic_id: i})
-            }).then(() => location.reload());
         }
     </script>
 </body>
