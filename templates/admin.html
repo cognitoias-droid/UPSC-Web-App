@@ -15,7 +15,19 @@
         </form>
         <p style="font-size: 12px; color: #666;">Note: CSV columns: q_en, q_hi, oa, ob, oc, od, ans, exp</p>
     </div>
-
+<div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #4caf50;">
+    <h4>🏗️ Structure Manager</h4>
+    <form action="/admin/add_structure" method="POST" style="display: flex; gap: 10px;">
+        <select name="type" style="padding: 5px;">
+            <option value="category">New Category</option>
+            <option value="subcat">New SubCategory (under Cat ID)</option>
+            <option value="topic">New Topic (under SubCat ID)</option>
+        </select>
+        <input type="text" name="name" placeholder="Name (e.g. History)" required>
+        <input type="number" name="parent_id" placeholder="Parent ID (Optional)">
+        <button type="submit" style="background: #4caf50; color: white; border: none; padding: 5px 15px; cursor: pointer;">Add</button>
+    </form>
+</div>
     <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #7b1fa2;">
         <h4 style="margin-top:0; color: #7b1fa2;">🚀 AI Bulk Magic (Direct Save)</h4>
         <p style="font-size: 13px;">Topic likhein aur kitne sawal chahiye wo select karein. Ye seedhe database mein save ho jayenge.</p>
