@@ -195,6 +195,26 @@ def submit_test():
         if is_correct: score += 1
         results_summary.append({"question": question, "user_ans": user_ans, "is_correct": is_correct})
     return render_template("result.html", score=score, total=len(q_ids), results=results_summary)
+@app.route("/explain_ai/<int:q_id>")
+def explain_ai(q_id):
+    try:
+        q = Question.query.get(q_id)
+        # AI ko UPSC teacher ke roop mein prompt dena
+        prompt = f"""
+        Analyze this UPSC Question: '{q.q_en}'
+        Correct Answer is: {q.ans}
+        
+        Provide a detailed explanation in a simple 'UPSC Coaching Style'. 
+        Include:
+        1. Context (Is sawal ka background kya hai?)
+        2. Detailed Analysis (Sahi jawab kyun sahi hai aur baaki galat kyun hain?)
+        3. Extra Info (UPSC ke liye aur kya zaruri hai is topic se?)
+        Use simple Hindi-English mix (Hinglish) as a mentor.
+        """
+        response = ai_model.generate_content(prompt)
+        return jsonify({"explanation": response.text})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
