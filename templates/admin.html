@@ -3,9 +3,29 @@
 <head>
     <title>Admin - Cognito IAS</title>
     <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+    <style>
+        .admin-card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .form-label { font-weight: bold; display: block; margin-bottom: 5px; margin-top: 10px; }
+        .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
 </head>
 <body style="font-family: Arial; padding: 30px; background: #f0f2f5;">
     <h1>Admin Dashboard - CognitoIAS</h1>
+
+    <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #4caf50;">
+        <h4>🏗️ Structure Manager</h4>
+        <p style="font-size: 12px; color: #666;">Note: Parent ID tabhi bharein jab Subcat ya Topic bana rahe hon.</p>
+        <form action="/admin/add_structure" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <select name="type" class="form-control" style="width: auto;">
+                <option value="category">New Category</option>
+                <option value="subcat">New SubCategory (under Cat ID)</option>
+                <option value="topic">New Topic (under SubCat ID)</option>
+            </select>
+            <input type="text" name="name" placeholder="Name (e.g. Ancient History)" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+            <input type="number" name="parent_id" placeholder="Parent ID" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100px;">
+            <button type="submit" style="background: #4caf50; color: white; border: none; padding: 8px 20px; cursor: pointer; border-radius: 4px;">Add Structure</button>
+        </form>
+    </div>
 
     <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ff9800;">
         <h3>📁 Bulk Upload (CSV)</h3>
@@ -13,67 +33,76 @@
             <input type="file" name="csv_file" accept=".csv" required>
             <button type="submit" style="background: #ff9800; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Upload Questions</button>
         </form>
-        <p style="font-size: 12px; color: #666;">Note: CSV columns: q_en, q_hi, oa, ob, oc, od, ans, exp</p>
     </div>
-<div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #4caf50;">
-    <h4>🏗️ Structure Manager</h4>
-    <form action="/admin/add_structure" method="POST" style="display: flex; gap: 10px;">
-        <select name="type" style="padding: 5px;">
-            <option value="category">New Category</option>
-            <option value="subcat">New SubCategory (under Cat ID)</option>
-            <option value="topic">New Topic (under SubCat ID)</option>
-        </select>
-        <input type="text" name="name" placeholder="Name (e.g. History)" required>
-        <input type="number" name="parent_id" placeholder="Parent ID (Optional)">
-        <button type="submit" style="background: #4caf50; color: white; border: none; padding: 5px 15px; cursor: pointer;">Add</button>
-    </form>
-</div>
+
     <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #7b1fa2;">
         <h4 style="margin-top:0; color: #7b1fa2;">🚀 AI Bulk Magic (Direct Save)</h4>
-        <p style="font-size: 13px;">Topic likhein aur kitne sawal chahiye wo select karein. Ye seedhe database mein save ho jayenge.</p>
-        <input type="text" id="bulk-topic" placeholder="Topic: e.g. Mauryan Empire, Climate Change" style="width: 50%; padding: 8px;">
+        <input type="text" id="bulk-topic" placeholder="Topic: e.g. Mauryan Empire" style="width: 50%; padding: 8px;">
         <input type="number" id="bulk-count" value="5" min="1" max="10" style="width: 50px; padding: 8px;">
         <button type="button" onclick="generateBulk()" id="bulk-btn" style="padding: 8px 15px; background: #7b1fa2; color: white; border: none; cursor: pointer; border-radius: 4px;">Generate & Save Bulk</button>
-        <div id="bulk-status" style="margin-top: 10px; font-weight: bold; color: #7b1fa2;"></div>
+        <div id="bulk-status" class="mt-2 small"></div>
     </div>
 
-    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #1976d2;">
-        <h4 style="margin-top:0; color: #1976d2;">✨ AI Quick Draft (Edit before Save)</h4>
-        <input type="text" id="ai-topic" placeholder="Topic likhein" style="width: 60%; padding: 8px;">
-        <button type="button" onclick="askAI()" id="ai-btn" style="padding: 8px 15px; background: #1976d2; color: white; border: none; cursor: pointer; border-radius: 4px;">Generate in Editor</button>
-    </div>
+    <div class="admin-card" style="border-left: 5px solid green;">
+        <h3>Add New MCQ (Hierarchical Selection)</h3>
+        
+        <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+            <p style="margin-top:0;"><strong>✨ AI Draft:</strong> <input type="text" id="ai-topic" placeholder="Topic likhein"> 
+            <button type="button" onclick="askAI()" id="ai-btn" style="background:#1976d2; color:white; border:none; padding:5px 10px; cursor:pointer;">Generate in Editor</button></p>
+        </div>
 
-    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 5px solid green; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-        <h3>Add New MCQ (Rich Editor Enabled)</h3>
         <form action="/admin/save_mcq" method="POST">
-            <p><strong>English Question:</strong></p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div>
+                    <label class="form-label text-primary">1. Category</label>
+                    <select id="main_cat" onchange="loadSubCats()" class="form-control">
+                        <option value="">-- Select Category --</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }} (ID: {{cat.id}})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label text-primary">2. SubCategory</label>
+                    <select id="sub_cat" onchange="loadTopics()" class="form-control">
+                        <option value="">-- Select SubCat --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label text-primary">3. Final Topic</label>
+                    <select id="topic_id_final" name="topic_id" class="form-control" required>
+                        <option value="">-- Select Topic --</option>
+                    </select>
+                </div>
+            </div>
+
+            <p class="form-label">English Question:</p>
             <textarea name="q_en" id="editor_en"></textarea>
             
-            <p><strong>Hindi Question:</strong></p>
+            <p class="form-label">Hindi Question:</p>
             <textarea name="q_hi" id="editor_hi"></textarea>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                <input type="text" name="oa" placeholder="Option A" required style="padding: 8px;">
-                <input type="text" name="ob" placeholder="Option B" required style="padding: 8px;">
-                <input type="text" name="oc" placeholder="Option C" required style="padding: 8px;">
-                <input type="text" name="od" placeholder="Option D" required style="padding: 8px;">
+                <input type="text" name="oa" placeholder="Option A" required class="form-control">
+                <input type="text" name="ob" placeholder="Option B" required class="form-control">
+                <input type="text" name="oc" placeholder="Option C" required class="form-control">
+                <input type="text" name="od" placeholder="Option D" required class="form-control">
             </div>
 
-            <p><strong>Correct Answer:</strong></p>
-            <select name="ans" style="padding: 8px; width: 100px;">
+            <p class="form-label">Correct Answer:</p>
+            <select name="ans" class="form-control" style="width: 100px;">
                 <option value="A">A</option><option value="B">B</option>
                 <option value="C">C</option><option value="D">D</option>
             </select>
 
-            <p><strong>Explanation:</strong></p>
+            <p class="form-label">Explanation:</p>
             <textarea name="exp" id="editor_exp"></textarea>
 
-            <button type="submit" style="background: green; color: white; padding: 12px 25px; border: none; margin-top: 15px; cursor: pointer; border-radius: 4px; font-weight: bold;">Save MCQ To Database</button>
+            <button type="submit" style="background: green; color: white; padding: 12px 25px; border: none; margin-top: 20px; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%;">Save MCQ To Database</button>
         </form>
     </div>
 
-    <hr style="margin: 40px 0;">
-    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <div class="admin-card">
         <h3 style="color: #2c3e50;">📚 Questions Bank (Total: {{ q_count }})</h3>
         <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px;">
             <thead style="background: #f8f9fa;">
@@ -89,7 +118,7 @@
                     <td style="padding: 10px; text-align: center;">{{ q.id }}</td>
                     <td style="padding: 10px;">
                         <div style="font-weight: bold; color: #1a73e8;">{{ q.q_en | safe }}</div>
-                        <div style="color: #5f6368; margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px;">{{ q.q_hi | safe }}</div>
+                        <div style="color: #5f6368; margin-top: 5px;">{{ q.q_hi | safe }}</div>
                     </td>
                     <td style="padding: 10px; text-align: center; font-weight: bold; color: green;">{{ q.ans }}</td>
                 </tr>
@@ -99,51 +128,63 @@
     </div>
 
     <script>
-        // CKEditor initialization
         CKEDITOR.replace('editor_en');
         CKEDITOR.replace('editor_hi');
         CKEDITOR.replace('editor_exp');
 
-        // NEW: Function for Bulk AI
+        // --- CASCADING DROPDOWN LOGIC ---
+        
+        function loadSubCats() {
+            let catId = document.getElementById('main_cat').value;
+            let subSelect = document.getElementById('sub_cat');
+            subSelect.innerHTML = '<option>Loading...</option>';
+            
+            fetch('/get_subcats/' + catId)
+            .then(res => res.json())
+            .then(data => {
+                subSelect.innerHTML = '<option value="">-- Select SubCat --</option>';
+                data.forEach(s => {
+                    subSelect.innerHTML += `<option value="${s.id}">${s.name} (ID: ${s.id})</option>`;
+                });
+            });
+        }
+
+        function loadTopics() {
+            let subId = document.getElementById('sub_cat').value;
+            let topicSelect = document.getElementById('topic_id_final');
+            topicSelect.innerHTML = '<option>Loading...</option>';
+            
+            fetch('/get_topics/' + subId)
+            .then(res => res.json())
+            .then(data => {
+                topicSelect.innerHTML = '<option value="">-- Select Topic --</option>';
+                data.forEach(t => {
+                    topicSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                });
+            });
+        }
+
+        // AI Functions (As before)
         function generateBulk() {
             let topic = document.getElementById('bulk-topic').value;
             let count = document.getElementById('bulk-count').value;
             let btn = document.getElementById('bulk-btn');
-            let status = document.getElementById('bulk-status');
-
-            if(!topic) return alert("Bulk ke liye topic likhiye!");
-            
-            btn.innerText = "AI Sawal Bana Raha Hai...";
-            btn.disabled = true;
-            status.innerText = "Kripya intezar karein, database mein sawal bhare ja rahe hain...";
-
+            if(!topic) return alert("Topic likhiye!");
+            btn.innerText = "Processing..."; btn.disabled = true;
             fetch('/admin/bulk_ai', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({topic: topic, count: count})
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.message) {
-                    status.innerText = "✅ " + data.message;
-                    setTimeout(() => location.reload(), 2000);
-                } else {
-                    status.innerText = "❌ Galti: " + data.error;
-                }
-                btn.disabled = false;
-                btn.innerText = "Generate & Save Bulk";
+            }).then(res => res.json()).then(data => {
+                alert(data.message || data.error);
+                location.reload();
             });
         }
 
-        // Original Function for Single AI Draft
         function askAI() {
             let topic = document.getElementById('ai-topic').value;
-            let btn = document.getElementById('ai-btn');
             if(!topic) return alert("Pehle topic likhiye!");
-            
-            btn.innerText = "AI Soch raha hai...";
-            btn.disabled = true;
-            
+            document.getElementById('ai-btn').innerText = "Thinking...";
             fetch('/admin/generate_ai', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -154,19 +195,12 @@
                 CKEDITOR.instances.editor_en.setData(data.q_en || "");
                 CKEDITOR.instances.editor_hi.setData(data.q_hi || "");
                 CKEDITOR.instances.editor_exp.setData(data.exp || "");
-                
                 document.getElementsByName('oa')[0].value = data.oa || "";
                 document.getElementsByName('ob')[0].value = data.ob || "";
                 document.getElementsByName('oc')[0].value = data.oc || "";
                 document.getElementsByName('od')[0].value = data.od || "";
                 document.getElementsByName('ans')[0].value = data.ans || "A";
-                
-                btn.innerText = "Generate in Editor";
-                btn.disabled = false;
-            })
-            .catch(err => {
-                alert("Galti: " + err);
-                btn.disabled = false;
+                document.getElementById('ai-btn').innerText = "Generate in Editor";
             });
         }
     </script>
