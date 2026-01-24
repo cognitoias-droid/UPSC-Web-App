@@ -171,6 +171,13 @@ def submit_test():
         if is_correct: score += 1
         results_summary.append({"question": question, "user_ans": user_ans, "is_correct": is_correct})
     return render_template("result.html", score=score, total=len(q_ids), results=results_summary)
+@app.route("/test/topic/<int:topic_id>")
+def test_by_topic(topic_id):
+    # Sirf us specific topic ke sawal nikalna
+    questions = Question.query.filter_by(topic_id=topic_id).all()
+    if not questions:
+        return "Is topic mein abhi koi sawal nahi hain. Admin se sampark karein!"
+    return render_template("test.html", questions=questions)
 
 if __name__ == "__main__":
     app.run(debug=True)
