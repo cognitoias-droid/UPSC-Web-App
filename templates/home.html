@@ -3,73 +3,65 @@
 <head>
     <title>Cognito IAS - Student Portal</title>
     <style>
-        body { font-family: 'Segoe UI', Arial; padding: 20px; background: #f4f4f4; line-height: 1.6; }
-        .mcq-card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        body { font-family: 'Segoe UI', Arial; padding: 20px; background: #f0f2f5; line-height: 1.6; color: #333; }
+        .header { text-align: center; margin-bottom: 40px; padding: 40px; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header h1 { color: #1a73e8; margin: 0; font-size: 2.5rem; }
         
-        /* MAGIC CSS: Isse Excel ka 'Enter' website par 'Line Break' ban jayega */
-        .mcq-card h3, .mcq-card p { 
-            white-space: pre-wrap; 
+        .category-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .category-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; border-top: 5px solid #1a73e8; }
+        .category-card:hover { transform: translateY(-5px); }
+        
+        .cat-title { background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #eee; font-weight: bold; font-size: 1.2rem; color: #2c3e50; }
+        .subcat-list { padding: 15px 20px; }
+        .subcat-item { margin-bottom: 15px; }
+        .subcat-name { font-weight: 600; color: #5f6368; display: block; margin-bottom: 8px; font-size: 0.95rem; }
+        
+        .topic-link { 
+            display: inline-block; background: #eef2ff; color: #4e73df; padding: 5px 12px; 
+            border-radius: 20px; margin: 3px; font-size: 0.85rem; text-decoration: none; transition: 0.2s;
         }
-
-        .option-btn { 
-            display: block; width: 100%; text-align: left; padding: 12px; 
-            margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; 
-            background: #fff; cursor: pointer; transition: 0.3s;
+        .topic-link:hover { background: #4e73df; color: white; }
+        
+        .test-btn-main { 
+            display: block; width: fit-content; margin: 30px auto; background: #1a73e8; 
+            color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;
         }
-        .option-btn:hover { background: #f0f0f0; border-color: #3498db; }
-        .result-box { display: none; margin-top: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid transparent; }
-        .show-btn { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
-        img { max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; }
+        .admin-link { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-size: 12px; }
     </style>
 </head>
 <body>
-    <h1>Cognito IAS: Practice Portal</h1>
-    <hr>
 
-    {% for q in questions %}
-    <div class="mcq-card">
-        <h3>Q: {{ q.q_en | safe }}</h3>
-        <p style="color: #666; font-style: italic;">{{ q.q_hi | safe }}</p>
-
-        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'A', '{{ q.ans }}')">A) {{ q.oa }}</button>
-        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'B', '{{ q.ans }}')">B) {{ q.ob }}</button>
-        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'C', '{{ q.ans }}')">C) {{ q.oc }}</button>
-        <button class="option-btn" onclick="checkAns('{{ q.id }}', 'D', '{{ q.ans }}')">D) {{ q.od }}</button>
-
-        <div id="result-{{ q.id }}" class="result-box">
-            <div id="status-{{ q.id }}"></div>
-            <strong>Correct Answer: {{ q.ans }}</strong><br>
-            <p><strong>Explanation:</strong> {{ q.exp | safe }}</p>
-        </div>
-
-        <button class="show-btn" onclick="toggleResult('{{ q.id }}')">Show/Hide Answer</button>
+    <div class="header">
+        <h1>Cognito IAS</h1>
+        <p>Aapki UPSC Taiyari ka Digital Saathi</p>
+        <a href="/test" class="test-btn-main">Quick 5 Questions Test</a>
     </div>
-    {% endfor %}
 
-    <script>
-        function checkAns(qId, selected, correct) {
-            var resultBox = document.getElementById("result-" + qId);
-            var statusDiv = document.getElementById("status-" + qId);
-            
-            resultBox.style.display = "block";
-            
-            if (selected === correct) {
-                resultBox.style.backgroundColor = "#d4edda"; 
-                resultBox.style.color = "#155724";
-                resultBox.style.borderColor = "#28a745";
-                statusDiv.innerHTML = "<b>✅ Sahi Jawab!</b>";
-            } else {
-                resultBox.style.backgroundColor = "#f8d7da"; 
-                resultBox.style.color = "#721c24";
-                resultBox.style.borderColor = "#dc3545";
-                statusDiv.innerHTML = "<b>❌ Galat Jawab!</b> Sahi jawab " + correct + " hai.";
-            }
-        }
+    <div class="category-grid">
+        {% for cat in categories %}
+        <div class="category-card">
+            <div class="cat-title">📚 {{ cat.name }}</div>
+            <div class="subcat-list">
+                {% for sub in cat.subcategories %}
+                <div class="subcat-item">
+                    <span class="subcat-name">📂 {{ sub.name }}</span>
+                    <div class="topics">
+                        {% for topic in sub.topics %}
+                        <a href="/test/topic/{{ topic.id }}" class="topic-link">
+                            {{ topic.name }} ({{ topic.questions|length }})
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted small">Abhi koi subcategory nahi hai.</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 
-        function toggleResult(qId) {
-            var x = document.getElementById("result-" + qId);
-            x.style.display = (x.style.display === "none" || x.style.display === "") ? "block" : "none";
-        }
-    </script>
+    <a href="/admin" class="admin-link">Admin Panel</a>
+
 </body>
 </html>
