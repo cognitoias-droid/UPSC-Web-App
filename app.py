@@ -93,7 +93,7 @@ def save_mcq():
         q_en=request.form.get("q_en"), q_hi=request.form.get("q_hi"),
         oa=request.form.get("oa"), ob=request.form.get("ob"),
         oc=request.form.get("oc"), od=request.form.get("od"),
-        ans=request.form.get("ans").strip().upper(), 
+        ans=request.form.get("ans").strip().upper()[0] if request.form.get("ans") else "A",
         exp=request.form.get("exp"),
         topic_id=int(t_id) if t_id else None
     )
@@ -105,17 +105,7 @@ def save_mcq():
 def generate_ai():
     try:
         topic = request.json.get("topic")
-        prompt = f"""Create 1 high-quality UPSC MCQ on {topic}. 
-        If it's a statement-based question, use <br> tag for each statement to show them in NEW LINES.
-        Example format for q_en: 'Consider the following:<br>1. Statement X<br>2. Statement Y'
-        Return ONLY a JSON object: 
-        {{
-            "q_en": "Question in English with <br> for statements",
-            "q_hi": "Hindi translation with <br> for statements",
-            "oa": "Option A", "ob": "Option B", "oc": "Option C", "od": "Option D",
-            "ans": "A", 
-            "exp": "Detailed explanation with <br> for points"
-        }}"""
+        prompt = f"Create 1 high-quality UPSC MCQ on {topic}. Use <br> for statements. Return ONLY JSON."
         response = ai_model.generate_content(prompt)
         text = response.text.strip().replace('```json', '').replace('```', '')
         return jsonify(json.loads(text))
@@ -129,22 +119,28 @@ def bulk_ai():
         topic_name = data.get("topic")
         topic_id = data.get("topic_id")
         count = int(data.get("count", 3))
-
-        prompt = f"Create {count} UPSC MCQs on '{topic_name}' with <br> for statements. Return ONLY a JSON list: [{{'q_en':'', 'q_hi':'', 'oa':'', 'ob':'', 'oc':'', 'od':'', 'ans':'A/B/C/D', 'exp':''}}]"
+        prompt = f"Create {count} UPSC MCQs on '{topic_name}' with <br> for statements. Return ONLY JSON list."
         response = ai_model.generate_content(prompt)
         raw_text = response.text.strip().replace('```json', '').replace('```', '')
         questions_data = json.loads(raw_text)
-        
         for item in questions_data:
             db.session.add(Question(
-                q_en=item['q_en'], q_hi=item['q_hi'],
-                oa=item['oa'], ob=item['ob'], oc=item['oc'], od=item['od'],
-                ans=item['ans'].strip().upper()[0], # Sirf pehla character 'A' save karein
-                exp=item['exp'],
-                topic_id=int(topic_id) if topic_id else None
+                q_en=item['q_en'], q_hi=item['q_hi'], oa=item['oa'], ob=item['ob'], oc=item['oc'], od=item['od'],
+                ans=item['ans'].strip().upper()[0], exp=item['exp'], topic_id=int(topic_id)
             ))
         db.session.commit()
-        return jsonify({"message": "Safalta! Sawal jodh diye gaye hain."})
+        return jsonify({"message": "Safalta!"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/admin/generate_mapping_ai", methods=["POST"])
+def generate_mapping_ai():
+    try:
+        region = request.json.get("topic")
+        prompt = f"Create 1 UPSC Mapping MCQ on '{region}'. Focus on borders/locations. Use <br> for statements. Return ONLY JSON."
+        response = ai_model.generate_content(prompt)
+        text = response.text.strip().replace('```json', '').replace('```', '')
+        return jsonify(json.loads(text))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -163,16 +159,12 @@ def add_structure():
     stype = request.form.get("type")
     name = request.form.get("name")
     p_id = request.form.get("parent_id")
-    if stype == "category":
-        db.session.add(Category(name=name))
-    elif stype == "subcat":
-        db.session.add(SubCategory(name=name, category_id=p_id))
-    elif stype == "topic":
-        db.session.add(Topic(name=name, subcategory_id=p_id))
+    if stype == "category": db.session.add(Category(name=name))
+    elif stype == "subcat": db.session.add(SubCategory(name=name, category_id=p_id))
+    elif stype == "topic": db.session.add(Topic(name=name, subcategory_id=p_id))
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
-# --- DELETE ROUTES ---
 @app.route("/admin/delete_question/<int:id>")
 def delete_question(id):
     q = Question.query.get(id)
@@ -187,19 +179,10 @@ def delete_structure(stype, id):
     if stype == "category": item = Category.query.get(id)
     elif stype == "subcat": item = SubCategory.query.get(id)
     elif stype == "topic": item = Topic.query.get(id)
-    
     if item:
         db.session.delete(item)
         db.session.commit()
     return redirect(url_for('admin_dashboard'))
-
-@app.route("/system_init")
-def system_init():
-    try:
-        db.create_all()
-        return "SUCCESS: Tijori taiyar hai!"
-    except Exception as e:
-        return f"Error: {str(e)}"
 
 @app.route("/test/topic/<int:topic_id>")
 def test_by_topic(topic_id):
@@ -223,40 +206,16 @@ def submit_test():
 def explain_ai(q_id):
     try:
         q = Question.query.get(q_id)
-        prompt = f"""Analyze this UPSC Question: '{q.q_en}'
-        Correct Answer is: {q.ans}
-        Provide a detailed explanation in a simple 'UPSC Coaching Style'. 
-        Include:
-        1. Context (Is sawal ka background kya hai?)
-        2. Detailed Analysis (Sahi jawab kyun sahi hai aur baaki galat kyun hain?)
-        3. Extra Info (UPSC ke liye aur kya zaruri hai is topic se?)
-        Use simple Hindi-English mix (Hinglish) as a mentor."""
+        prompt = f"Explain this UPSC Question: '{q.q_en}'. Answer: {q.ans}. Style: Hinglish UPSC Mentor."
         response = ai_model.generate_content(prompt)
         return jsonify({"explanation": response.text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
- @app.route("/admin/generate_mapping_ai", methods=["POST"])
-def generate_mapping_ai():
-    try:
-        region = request.json.get("topic") # Jaise: West Asia, Red Sea, Himalayas
-        prompt = f"""
-        Create 1 high-quality UPSC Mapping MCQ on '{region}'.
-        The question should focus on borders, cities, rivers, or mountains.
-        Use <br> for statements.
-        
-        Return ONLY a JSON object: 
-        {{
-            "q_en": "Question in English with <br> for locations",
-            "q_hi": "Hindi translation with <br>",
-            "oa": "Option A", "ob": "Option B", "oc": "Option C", "od": "Option D",
-            "ans": "A", 
-            "exp": "Detailed mapping logic (e.g. why Red Sea borders X and not Y) with <br>"
-        }}
-        """
-        response = ai_model.generate_content(prompt)
-        text = response.text.strip().replace('```json', '').replace('```', '')
-        return jsonify(json.loads(text))
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+
+@app.route("/system_init")
+def system_init():
+    db.create_all()
+    return "SUCCESS"
+
 if __name__ == "__main__":
     app.run(debug=True)
