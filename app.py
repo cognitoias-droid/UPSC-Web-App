@@ -101,22 +101,33 @@ def save_mcq():
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
-@app.route("/admin/generate_ai", methods=["POST"])
-def generate_ai():
+@app.route("/admin/bulk_ai", methods=["POST"])
+def bulk_ai():
     try:
-        topic = request.json.get("topic")
-        prompt = f"Create 1 UPSC MCQ on {topic}. Use <br> for statements. Return ONLY JSON."
+        data = request.get_json()
+        topic_name = data.get("topic")
+        topic_id = data.get("topic_id")
+        count = int(data.get("count", 3))
+        prompt = f"Create {count} UPSC MCQs on '{topic_name}' with <br> for statements. Return ONLY JSON list: [{{'q_en':'', 'q_hi':'', 'oa':'', 'ob':'', 'oc':'', 'od':'', 'ans':'A/B/C/D', 'exp':''}}]"
         response = ai_model.generate_content(prompt)
-        text = response.text.strip().replace('```json', '').replace('```', '')
-        return jsonify(json.loads(text))
+        raw_text = response.text.strip().replace('```json', '').replace('```', '')
+        questions_data = json.loads(raw_text)
+        for item in questions_data:
+            db.session.add(Question(
+                q_en=item['q_en'], q_hi=item['q_hi'], oa=item['oa'], ob=item['ob'], oc=item['oc'], od=item['od'],
+                ans=item['ans'].strip().upper()[0], exp=item['exp'], topic_id=int(topic_id)
+            ))
+        db.session.commit()
+        return jsonify({"message": "Safalta! Bulk MCQs jodh diye gaye hain."})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route("/admin/generate_mapping_ai", methods=["POST"])
 def generate_mapping_ai():
     try:
-        region = request.json.get("topic")
-        prompt = f"Create 1 UPSC Mapping MCQ on '{region}'. Focus on borders/locations. Use <br> for statements. Return ONLY JSON."
+        data = request.get_json()
+        region = data.get("topic")
+        prompt = f"Create 1 Mapping MCQ on '{region}'. Focus on borders/locations. Use <br>. Return ONLY JSON."
         response = ai_model.generate_content(prompt)
         text = response.text.strip().replace('```json', '').replace('```', '')
         return jsonify(json.loads(text))
@@ -138,12 +149,9 @@ def add_structure():
     stype = request.form.get("type")
     name = request.form.get("name")
     p_id = request.form.get("parent_id")
-    if stype == "category":
-        db.session.add(Category(name=name))
-    elif stype == "subcat":
-        db.session.add(SubCategory(name=name, category_id=p_id))
-    elif stype == "topic":
-        db.session.add(Topic(name=name, subcategory_id=p_id))
+    if stype == "category": db.session.add(Category(name=name))
+    elif stype == "subcat": db.session.add(SubCategory(name=name, category_id=p_id))
+    elif stype == "topic": db.session.add(Topic(name=name, subcategory_id=p_id))
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
@@ -188,7 +196,7 @@ def submit_test():
 def explain_ai(q_id):
     try:
         q = Question.query.get(q_id)
-        prompt = f"Explain this UPSC Question: '{q.q_en}'. Answer: {q.ans}. Style: Hinglish UPSC Mentor."
+        prompt = f"Explain UPSC Q: '{q.q_en}'. Ans: {q.ans}. Style: Hinglish Mentor."
         response = ai_model.generate_content(prompt)
         return jsonify({"explanation": response.text})
     except Exception as e:
