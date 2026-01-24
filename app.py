@@ -157,6 +157,52 @@ def submit_test():
         if is_correct: score += 1
         results_summary.append({"question": question, "user_ans": user_ans, "is_correct": is_correct})
     return render_template("result.html", score=score, total=len(q_ids), results=results_summary)
+@app.route("/admin/bulk_ai", methods=["POST"])
+def bulk_ai():
+    try:
+        topic_name = request.json.get("topic")
+        topic_id = request.json.get("topic_id") # Nayi ID receive ki
+        count = int(request.json.get("count", 3))
+
+        prompt = f"Create {count} UPSC MCQs on '{topic_name}'. Return ONLY a JSON list: [{{'q_en':'', 'q_hi':'', 'oa':'', 'ob':'', 'oc':'', 'od':'', 'ans':'A/B/C/D', 'exp':''}}]"
+        response = ai_model.generate_content(prompt)
+        raw_text = response.text.strip().replace('```json', '').replace('```', '')
+        questions_data = json.loads(raw_text)
+        
+        for item in questions_data:
+            db.session.add(Question(
+                q_en=item['q_en'], q_hi=item['q_hi'],
+                oa=item['oa'], ob=item['ob'], oc=item['oc'], od=item['od'],
+                ans=item['ans'], exp=item['exp'],
+                topic_id=int(topic_id) # Yahan ID set ho rahi hai!
+            ))
+        db.session.commit()
+        return jsonify({"message": f"Safalta! {len(questions_data)} sawal Topic ID {topic_id} mein jodh diye gaye hain."})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+# --- DELETE ROUTES ---
+
+@app.route("/admin/delete_question/<int:id>")
+def delete_question(id):
+    q = Question.query.get(id)
+    if q:
+        db.session.delete(q)
+        db.session.commit()
+    return redirect(url_for('admin_dashboard'))
+
+@app.route("/admin/delete_structure/<string:stype>/<int:id>")
+def delete_structure(stype, id):
+    if stype == "category":
+        item = Category.query.get(id)
+    elif stype == "subcat":
+        item = SubCategory.query.get(id)
+    elif stype == "topic":
+        item = Topic.query.get(id)
+    
+    if item:
+        db.session.delete(item)
+        db.session.commit()
+    return redirect(url_for('admin_dashboard'))
 
 if __name__ == "__main__":
     app.run(debug=True)
